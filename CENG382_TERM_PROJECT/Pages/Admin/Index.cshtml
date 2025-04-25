@@ -5,4 +5,38 @@
 }
 
 <h2>Admin Panel</h2>
-<p>Hoş geldin Admin!</p>
+
+<button class="btn btn-primary mb-3" onclick="toggleForm()">Yeni Instructor Ekle</button>
+
+<div id="instructorForm" style="display:none;">
+    <h4>Yeni Instructor Ekle</h4>
+    <form method="post">
+        <div class="mb-2">
+            <label>Ad Soyad</label>
+            <input type="text" name="FullName" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Email</label>
+            <input type="email" name="Email" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Şifre</label>
+            <input type="password" name="Password" class="form-control" />
+        </div>
+        <button type="submit" class="btn btn-success">Instructor Ekle</button>
+    </form>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info mt-3">@Model.Message</div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function toggleForm() {
+            const form = document.getElementById("instructorForm");
+            form.style.display = form.style.display === "none" ? "block" : "none";
+        }
+    </script>
+}

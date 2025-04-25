@@ -1,4 +1,9 @@
-﻿<!DOCTYPE html>
+﻿@using System
+@using System.Linq
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -32,7 +37,7 @@
                     @if (User.Identity != null && User.Identity.IsAuthenticated)
 					{
 						<span class="navbar-text text-dark me-2">
-							Giriş yapan: @User.Identity.Name
+							Giriş yapan: @HttpContextAccessor.HttpContext.User.Identity.Name
 						</span>
 						<a class="btn btn-sm btn-outline-danger" asp-page="/Auth/Logout">Çıkış</a>
 					}
