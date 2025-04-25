@@ -29,9 +29,18 @@
                             <a class="nav-link text-dark" asp-area="" asp-page="/Instructor/Index">Instructor Panel</a>
                         </li>
                     </ul>
-                    <span class="navbar-text text-dark">
-                        Giriş yapan: @Context.User.Identity.Name
-                    </span>
+                    @if (User.Identity != null && User.Identity.IsAuthenticated)
+                    {
+                        <span class="navbar-text text-dark">
+                            Giriş yapan: @User.Identity.Name
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="navbar-text text-muted">
+                            Giriş yapılmamış
+                        </span>
+                    }
                 </div>
             </div>
         </nav>
