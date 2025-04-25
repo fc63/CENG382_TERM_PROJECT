@@ -7,6 +7,9 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using BCrypt.Net;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Cryptography;
+using System.Text;
+using CENG382_TERM_PROJECT.Utils;
 
 namespace CENG382_TERM_PROJECT.Pages.Auth
 {
@@ -56,11 +59,32 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
             var principal = new ClaimsPrincipal(identity);
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+			
+			var cookieOptions = new CookieOptions
+			{
+				Expires = DateTime.UtcNow.AddMinutes(30),
+				HttpOnly = true,
+				Secure = true,
+				SameSite = SameSiteMode.Strict
+			};
 
-            if (user.Role == "Admin")
-                return RedirectToPage("/Admin/Index");
-            else
+			var token = SecurityHelper.GenerateSecureToken(user.Email);
+			var sessionId = HttpContext.Session.Id;
+
+			HttpContext.Session.SetString("username", user.Email);
+			HttpContext.Session.SetString("token", token);
+			HttpContext.Session.SetString("session_id", sessionId);
+
+			Response.Cookies.Append("username", user.Email, cookieOptions);
+			Response.Cookies.Append("token", token, cookieOptions);
+			Response.Cookies.Append("session_id", sessionId, cookieOptions);
+
+
+            if (user.Role == "Instructor")
                 return RedirectToPage("/Instructor/Index");
+            else if (user.Role == "Admin")
+                return RedirectToPage("/Admin/Index");
+			return RedirectToPage("/Index");
         }
     }
 }
