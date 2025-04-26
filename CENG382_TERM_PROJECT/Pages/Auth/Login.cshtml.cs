@@ -33,8 +33,20 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
 
         public string ErrorMessage { get; set; }
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
+            var username = HttpContext.Session.GetString("username");
+            var role = HttpContext.Session.GetString("role");
+
+            if (!string.IsNullOrEmpty(username))
+            {
+                if (role == "Instructor")
+                    return RedirectToPage("/Instructor/Index");
+                else if (role == "Admin")
+                    return RedirectToPage("/Admin/Index");
+            }
+
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -128,6 +140,7 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
 			HttpContext.Session.SetString("username", user.Email);
 			HttpContext.Session.SetString("token", token);
 			HttpContext.Session.SetString("session_id", sessionId);
+            HttpContext.Session.SetString("role", user.Role);
             _cache.Set(user.Email + "_token", token, TimeSpan.FromMinutes(30));
 
             Response.Cookies.Append("username", _protector.Protect(user.Email), cookieOptions);
