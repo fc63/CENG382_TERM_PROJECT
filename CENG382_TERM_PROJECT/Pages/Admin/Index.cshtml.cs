@@ -75,6 +75,7 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
                 Response.Cookies.Delete("session_id");
                 return RedirectToPage("/Auth/Login");
             }
+            Instructors = _context.Users.Where(u => u.Role == "Instructor").ToList();
             return Page();
         }
         private readonly AppDbContext _context;
@@ -85,7 +86,9 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
         [BindProperty] public string FullName { get; set; }
 		[BindProperty] public string Email { get; set; }
 		[BindProperty] public string Password { get; set; }
-		public string Message { get; set; }
+        [BindProperty] public int? EditingId { get; set; }
+        public string Message { get; set; }
+        public List<User> Instructors { get; set; }
         public IndexModel(AppDbContext context, IDataProtectionProvider provider, IConfiguration configuration, IMemoryCache cache)
         {
             _context = context;
@@ -94,14 +97,14 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
             _cache = cache;
         }
         public async Task<IActionResult> OnPostAsync()
-		{
-			var sessionUsername = HttpContext.Session.GetString("username");
-			var sessionToken = HttpContext.Session.GetString("token");
-			var sessionId = HttpContext.Session.GetString("session_id");
+        {
+            var sessionUsername = HttpContext.Session.GetString("username");
+            var sessionToken = HttpContext.Session.GetString("token");
+            var sessionId = HttpContext.Session.GetString("session_id");
 
-			Request.Cookies.TryGetValue("username", out var cookieUsername);
-			Request.Cookies.TryGetValue("token", out var cookieToken);
-			Request.Cookies.TryGetValue("session_id", out var cookieSessionId);
+            Request.Cookies.TryGetValue("username", out var cookieUsername);
+            Request.Cookies.TryGetValue("token", out var cookieToken);
+            Request.Cookies.TryGetValue("session_id", out var cookieSessionId);
 
             string decryptedUsername = null;
             string decryptedToken = null;
@@ -149,35 +152,68 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
             }
 
             if (string.IsNullOrEmpty(FullName) || string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
-			{
-				Message = "Tüm alanları doldurun.";
-				return Page();
-			}
-
-			var existing = await _context.Users.FirstOrDefaultAsync(u => u.Email == Email);
-			if (existing != null)
-			{
-				Message = "Bu email ile zaten bir kullanıcı var.";
-				return Page();
-			}
+            {
+                Message = "Tüm alanları doldurun.";
+                Instructors = _context.Users.Where(u => u.Role == "Instructor").ToList();
+                return Page();
+            }
 
             var pepper = _configuration["Security:Pepper"];
             var passwordWithPepper = Password + pepper;
-            var hash = BCrypt.Net.BCrypt.HashPassword(passwordWithPepper);
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(passwordWithPepper);
 
-            var instructor = new User
-			{
-				FullName = FullName,
-				Email = Email,
-				PasswordHash = hash,
-				Role = "Instructor"
-			};
+            if (EditingId.HasValue)
+            {
+                var instructorToUpdate = await _context.Users.FindAsync(EditingId.Value);
+                if (instructorToUpdate != null && instructorToUpdate.Role == "Instructor")
+                {
+                    instructorToUpdate.FullName = FullName;
+                    instructorToUpdate.Email = Email;
+                    instructorToUpdate.PasswordHash = hashedPassword;
 
-			_context.Users.Add(instructor);
-			await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync();
+                    Message = "Instructor başarıyla güncellendi.";
+                    Instructors = _context.Users.Where(u => u.Role == "Instructor").ToList();
+                }
+            }
+            else
+            {
+                var existing = await _context.Users.FirstOrDefaultAsync(u => u.Email == Email);
+                if (existing != null)
+                {
+                    Message = "Bu email ile zaten bir kullanıcı var.";
+                    Instructors = _context.Users.Where(u => u.Role == "Instructor").ToList();
+                    return Page();
+                }
 
-			Message = "Instructor başarıyla eklendi.";
-			return Page();
-		}
+                var newInstructor = new User
+                {
+                    FullName = FullName,
+                    Email = Email,
+                    PasswordHash = hashedPassword,
+                    Role = "Instructor"
+                };
+
+                _context.Users.Add(newInstructor);
+                await _context.SaveChangesAsync();
+
+                Message = "Instructor başarıyla eklendi.";
+                Instructors = _context.Users.Where(u => u.Role == "Instructor").ToList();
+            }
+            return Page();
+        }
+        public async Task<IActionResult> OnPostDeleteAsync(int id)
+        {
+            var instructor = await _context.Users.FindAsync(id);
+            if (instructor != null && instructor.Role == "Instructor")
+            {
+                _context.Users.Remove(instructor);
+                await _context.SaveChangesAsync();
+                Message = "Instructor başarıyla silindi.";
+            }
+            Instructors = _context.Users.Where(u => u.Role == "Instructor").ToList();
+            return Page();
+        }
+
     }
 }
