@@ -39,7 +39,9 @@
 						<span class="navbar-text text-dark me-2">
 							Giriş yapan: @HttpContextAccessor.HttpContext.User.Identity.Name
 						</span>
-						<a class="btn btn-sm btn-outline-danger" asp-page="/Auth/Logout">Çıkış</a>
+						<form method="post" asp-page="/Auth/Logout" asp-antiforgery="true" class="d-inline">
+							<button type="submit" class="btn btn-sm btn-outline-danger">Çıkış</button>
+						</form>
 					}
                     else
                     {
