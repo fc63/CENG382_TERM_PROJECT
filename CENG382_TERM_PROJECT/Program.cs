@@ -34,6 +34,12 @@ builder.Services.AddAuthentication("Cookies")
         options.Cookie.HttpOnly = true;
     });
 	
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("InstructorOnly", policy => policy.RequireRole("Instructor"));
+});
+	
 	builder.Services.AddHttpContextAccessor();
 	
 	builder.Services.AddSession(options =>

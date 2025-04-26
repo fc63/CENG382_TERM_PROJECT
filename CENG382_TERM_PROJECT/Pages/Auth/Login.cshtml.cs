@@ -5,10 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using BCrypt.Net;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Cryptography;
-using System.Text;
+using Microsoft.AspNetCore.DataProtection;
 using CENG382_TERM_PROJECT.Utils;
 
 namespace CENG382_TERM_PROJECT.Pages.Auth
@@ -16,10 +13,12 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
     public class LoginModel : PageModel
     {
         private readonly AppDbContext _context;
+		private readonly IDataProtector _protector;
 
-        public LoginModel(AppDbContext context)
+        public LoginModel(AppDbContext context, IDataProtectionProvider provider)
         {
             _context = context;
+			_protector = provider.CreateProtector("CENG382_TERM_PROJECT_CookieProtector");
         }
 
         [BindProperty]
@@ -116,7 +115,7 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
 			};
 
 			var token = SecurityHelper.GenerateSecureToken(user.Email);
-			var sessionId = HttpContext.Session.Id;
+			var sessionId = Guid.NewGuid().ToString();
 
 			HttpContext.Session.SetString("username", user.Email);
 			HttpContext.Session.SetString("token", token);
@@ -125,7 +124,6 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
 			Response.Cookies.Append("username", user.Email, cookieOptions);
 			Response.Cookies.Append("token", token, cookieOptions);
 			Response.Cookies.Append("session_id", sessionId, cookieOptions);
-
 
             if (user.Role == "Instructor")
                 return RedirectToPage("/Instructor/Index");
