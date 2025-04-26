@@ -14,11 +14,13 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
     {
         private readonly AppDbContext _context;
 		private readonly IDataProtector _protector;
+        private readonly IConfiguration _configuration;
 
-        public LoginModel(AppDbContext context, IDataProtectionProvider provider)
+        public LoginModel(AppDbContext context, IDataProtectionProvider provider, IConfiguration configuration)
         {
             _context = context;
-			_protector = provider.CreateProtector("CENG382_TERM_PROJECT_CookieProtector");
+            _protector = provider.CreateProtector("CENG382_TERM_PROJECT_CookieProtector");
+            _configuration = configuration;
         }
 
         [BindProperty]
@@ -52,7 +54,10 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
 			}
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == Email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(Password, user.PasswordHash))
+            var pepper = _configuration["Security:Pepper"];
+            var passwordWithPepper = Password + pepper;
+
+            if (user == null || !BCrypt.Net.BCrypt.Verify(passwordWithPepper, user.PasswordHash))
             {
                 ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
                 var role = "Instructor";

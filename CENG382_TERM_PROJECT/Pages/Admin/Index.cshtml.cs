@@ -13,73 +13,75 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
     {
         public IActionResult OnGet()
         {
-			var sessionUsername = HttpContext.Session.GetString("username");
-			var sessionToken = HttpContext.Session.GetString("token");
-			var sessionId = HttpContext.Session.GetString("session_id");
+            var sessionUsername = HttpContext.Session.GetString("username");
+            var sessionToken = HttpContext.Session.GetString("token");
+            var sessionId = HttpContext.Session.GetString("session_id");
 
             Request.Cookies.TryGetValue("username", out var protectedUsername);
             Request.Cookies.TryGetValue("token", out var protectedToken);
             Request.Cookies.TryGetValue("session_id", out var protectedSessionId);
-
-            string cookieUsername = null;
-            string cookieToken = null;
-            string cookieSessionId = null;
-
-            try
-            {
-                if (!string.IsNullOrEmpty(protectedUsername))
-                    cookieUsername = _protector.Unprotect(protectedUsername);
-            }
-            catch
-            {
-                cookieUsername = null;
-            }
+            string cookieUsername = protectedUsername;
+            string cookieToken = protectedToken;
+            string cookieSessionId = protectedSessionId;
+            string decryptedUsername = null;
+            string decryptedToken = null;
+            string decryptedSessionId = null;
 
             try
             {
-                if (!string.IsNullOrEmpty(protectedToken))
-                    cookieToken = _protector.Unprotect(protectedToken);
+                if (!string.IsNullOrEmpty(cookieUsername))
+                    decryptedUsername = _protector.Unprotect(cookieUsername);
             }
             catch
             {
-                cookieToken = null;
+                decryptedUsername = null;
             }
 
             try
             {
-                if (!string.IsNullOrEmpty(protectedSessionId))
-                    cookieSessionId = _protector.Unprotect(protectedSessionId);
+                if (!string.IsNullOrEmpty(cookieToken))
+                    decryptedToken = _protector.Unprotect(cookieToken);
             }
             catch
             {
-                cookieSessionId = null;
+                decryptedToken = null;
             }
 
-
-            if (sessionUsername != cookieUsername || sessionToken != cookieToken || sessionId != cookieSessionId)
-			{
-				HttpContext.Session.Clear();
-				Response.Cookies.Delete("username");
-				Response.Cookies.Delete("token");
-				Response.Cookies.Delete("session_id");
+            try
+            {
+                if (!string.IsNullOrEmpty(cookieSessionId))
+                    decryptedSessionId = _protector.Unprotect(cookieSessionId);
+            }
+            catch
+            {
+                decryptedSessionId = null;
+            }
+            if (sessionUsername != decryptedUsername || sessionToken != decryptedToken || sessionId != decryptedSessionId)
+            {
+                HttpContext.Session.Clear();
+                Response.Cookies.Delete("username");
+                Response.Cookies.Delete("token");
+                Response.Cookies.Delete("session_id");
                 return RedirectToPage("/Auth/Login");
             }
-			return Page();
+            return Page();
         }
-		private readonly AppDbContext _context;
+        private readonly AppDbContext _context;
         private readonly IDataProtector _protector;
+        private readonly IConfiguration _configuration;
 
         [BindProperty] public string FullName { get; set; }
 		[BindProperty] public string Email { get; set; }
 		[BindProperty] public string Password { get; set; }
 		public string Message { get; set; }
 
-        public IndexModel(AppDbContext context, IDataProtectionProvider provider)
+        public IndexModel(AppDbContext context, IDataProtectionProvider provider, IConfiguration configuration)
         {
-			_context = context;
+            _context = context;
             _protector = provider.CreateProtector("CENG382_TERM_PROJECT_CookieProtector");
+            _configuration = configuration;
         }
-		public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync()
 		{
 			var sessionUsername = HttpContext.Session.GetString("username");
 			var sessionToken = HttpContext.Session.GetString("token");
@@ -89,16 +91,42 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
 			Request.Cookies.TryGetValue("token", out var cookieToken);
 			Request.Cookies.TryGetValue("session_id", out var cookieSessionId);
 
-			if (sessionUsername != cookieUsername || sessionToken != cookieToken || sessionId != cookieSessionId)
-			{
-				HttpContext.Session.Clear();
-				Response.Cookies.Delete("username");
-				Response.Cookies.Delete("token");
-				Response.Cookies.Delete("session_id");
-				return RedirectToPage("/Auth/Login");
-			}
+            string decryptedUsername = null;
+            string decryptedToken = null;
+            string decryptedSessionId = null;
 
-			if (string.IsNullOrEmpty(FullName) || string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
+            try
+            {
+                if (!string.IsNullOrEmpty(cookieUsername))
+                    decryptedUsername = _protector.Unprotect(cookieUsername);
+            }
+            catch { decryptedUsername = null; }
+
+            try
+            {
+                if (!string.IsNullOrEmpty(cookieToken))
+                    decryptedToken = _protector.Unprotect(cookieToken);
+            }
+            catch { decryptedToken = null; }
+
+            try
+            {
+                if (!string.IsNullOrEmpty(cookieSessionId))
+                    decryptedSessionId = _protector.Unprotect(cookieSessionId);
+            }
+            catch { decryptedSessionId = null; }
+
+            if (sessionUsername != decryptedUsername || sessionToken != decryptedToken || sessionId != decryptedSessionId)
+            {
+                HttpContext.Session.Clear();
+                Response.Cookies.Delete("username");
+                Response.Cookies.Delete("token");
+                Response.Cookies.Delete("session_id");
+                return RedirectToPage("/Auth/Login");
+            }
+
+
+            if (string.IsNullOrEmpty(FullName) || string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
 			{
 				Message = "Tüm alanları doldurun.";
 				return Page();
@@ -111,9 +139,11 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
 				return Page();
 			}
 
-			var hash = BCrypt.Net.BCrypt.HashPassword(Password);
+            var pepper = _configuration["Security:Pepper"];
+            var passwordWithPepper = Password + pepper;
+            var hash = BCrypt.Net.BCrypt.HashPassword(passwordWithPepper);
 
-			var instructor = new User
+            var instructor = new User
 			{
 				FullName = FullName,
 				Email = Email,
