@@ -1,5 +1,6 @@
 using CENG382_TERM_PROJECT.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,12 +10,30 @@ builder.Services.AddRazorPages();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 	
+var keysDirectoryPath = Path.Combine(AppContext.BaseDirectory, "Keys");
+if (!Directory.Exists(keysDirectoryPath))
+{
+    Directory.CreateDirectory(keysDirectoryPath);
+}
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysDirectoryPath))
+    .SetApplicationName("CENG382_TERM_PROJECT");
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, "Keys")))
+    .SetApplicationName("CENG382_TERM_PROJECT");
+	
 builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>
     {
         options.LoginPath = "/Auth/Login";
         options.AccessDeniedPath = "/Auth/Login";
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.HttpOnly = true;
     });
+	
 	builder.Services.AddHttpContextAccessor();
 	
 	builder.Services.AddSession(options =>

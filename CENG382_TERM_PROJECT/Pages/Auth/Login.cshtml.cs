@@ -41,13 +41,57 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
                 ErrorMessage = "Email ve şifre gereklidir.";
                 return Page();
             }
+			
+			var ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
+			var failedAttempt = await _context.FailedLoginAttempts
+				.FirstOrDefaultAsync(f => f.IPAddress == ipAddress && f.Email == Email);
+
+			if (failedAttempt != null && failedAttempt.BannedUntil != null && failedAttempt.BannedUntil > DateTime.UtcNow)
+			{
+				ErrorMessage = $"Çok fazla hatalı giriş denemesi. {failedAttempt.BannedUntil.Value.ToLocalTime()} saatinden sonra tekrar deneyin.";
+				return Page();
+			}
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(Password, user.PasswordHash))
             {
+                ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
+                var role = "Instructor";
+
+                failedAttempt = await _context.FailedLoginAttempts
+					.FirstOrDefaultAsync(f => f.IPAddress == ipAddress && f.Email == Email);
+
+                if (failedAttempt == null)
+                {
+                    failedAttempt = new FailedLoginAttempt
+                    {
+                        IPAddress = ipAddress,
+                        Email = Email,
+                        Role = role,
+                        AttemptCount = 1,
+                        LastAttemptTime = DateTime.UtcNow
+                    };
+                    _context.FailedLoginAttempts.Add(failedAttempt);
+                }
+                else
+                {
+                    failedAttempt.AttemptCount++;
+                    failedAttempt.LastAttemptTime = DateTime.UtcNow;
+                }
+
+                if ((role == "Instructor" && failedAttempt.AttemptCount >= 5) || (role == "Admin" && failedAttempt.AttemptCount >= 3))
+                {
+                    failedAttempt.BannedUntil = role == "Admin"
+                        ? DateTime.UtcNow.AddMinutes(30)
+                        : DateTime.UtcNow.AddMinutes(15);
+                }
+
+                await _context.SaveChangesAsync();
+
                 ErrorMessage = "Geçersiz email veya şifre.";
                 return Page();
             }
+
 
             var claims = new List<Claim>
             {
@@ -57,6 +101,9 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
+			
+			await HttpContext.SignOutAsync();
+			HttpContext.Session.Clear();
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 			
@@ -65,7 +112,7 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
 				Expires = DateTime.UtcNow.AddMinutes(30),
 				HttpOnly = true,
 				Secure = true,
-				SameSite = SameSiteMode.Strict
+				SameSite = SameSiteMode.Lax
 			};
 
 			var token = SecurityHelper.GenerateSecureToken(user.Email);
