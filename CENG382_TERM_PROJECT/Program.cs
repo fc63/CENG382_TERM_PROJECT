@@ -42,6 +42,8 @@ builder.Services.AddAuthorization(options =>
 	
 	builder.Services.AddHttpContextAccessor();
 	
+	builder.Services.AddMemoryCache();
+	
 	builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -61,6 +63,16 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Add("X-Frame-Options", "DENY");
+    context.Response.Headers.Add("Referrer-Policy", "no-referrer");
+    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self';");
+    await next();
+});
+
 
 app.UseSession();
 

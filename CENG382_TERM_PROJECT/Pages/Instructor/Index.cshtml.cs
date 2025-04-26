@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using CENG382_TERM_PROJECT.Models;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CENG382_TERM_PROJECT.Pages.Instructor
 {
@@ -12,11 +12,13 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor
     {
         private readonly AppDbContext _context;
         private readonly IDataProtector _protector;
+        private readonly IMemoryCache _cache;
 
-        public IndexModel(AppDbContext context, IDataProtectionProvider provider)
+        public IndexModel(AppDbContext context, IDataProtectionProvider provider, IMemoryCache cache)
         {
             _context = context;
             _protector = provider.CreateProtector("CENG382_TERM_PROJECT_CookieProtector");
+            _cache = cache;
         }
 
         public IActionResult OnGet()
@@ -72,7 +74,16 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor
                 Response.Cookies.Delete("session_id");
                 return RedirectToPage("/Auth/Login");
             }
+            var cacheToken = _cache.Get<string>(sessionUsername + "_token");
 
+            if (cacheToken == null || cacheToken != sessionToken)
+            {
+                HttpContext.Session.Clear();
+                Response.Cookies.Delete("username");
+                Response.Cookies.Delete("token");
+                Response.Cookies.Delete("session_id");
+                return RedirectToPage("/Auth/Login");
+            }
             return Page();
         }
     }

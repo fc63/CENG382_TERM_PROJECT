@@ -5,6 +5,7 @@ using CENG382_TERM_PROJECT.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CENG382_TERM_PROJECT.Pages.Admin
 {
@@ -64,22 +65,33 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
                 Response.Cookies.Delete("session_id");
                 return RedirectToPage("/Auth/Login");
             }
+            var cacheToken = _cache.Get<string>(sessionUsername + "_token");
+
+            if (cacheToken == null || cacheToken != sessionToken)
+            {
+                HttpContext.Session.Clear();
+                Response.Cookies.Delete("username");
+                Response.Cookies.Delete("token");
+                Response.Cookies.Delete("session_id");
+                return RedirectToPage("/Auth/Login");
+            }
             return Page();
         }
         private readonly AppDbContext _context;
         private readonly IDataProtector _protector;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _cache;
 
         [BindProperty] public string FullName { get; set; }
 		[BindProperty] public string Email { get; set; }
 		[BindProperty] public string Password { get; set; }
 		public string Message { get; set; }
-
-        public IndexModel(AppDbContext context, IDataProtectionProvider provider, IConfiguration configuration)
+        public IndexModel(AppDbContext context, IDataProtectionProvider provider, IConfiguration configuration, IMemoryCache cache)
         {
             _context = context;
             _protector = provider.CreateProtector("CENG382_TERM_PROJECT_CookieProtector");
             _configuration = configuration;
+            _cache = cache;
         }
         public async Task<IActionResult> OnPostAsync()
 		{
@@ -125,6 +137,16 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
                 return RedirectToPage("/Auth/Login");
             }
 
+            var cacheToken = _cache.Get<string>(sessionUsername + "_token");
+
+            if (cacheToken == null || cacheToken != sessionToken)
+            {
+                HttpContext.Session.Clear();
+                Response.Cookies.Delete("username");
+                Response.Cookies.Delete("token");
+                Response.Cookies.Delete("session_id");
+                return RedirectToPage("/Auth/Login");
+            }
 
             if (string.IsNullOrEmpty(FullName) || string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
 			{

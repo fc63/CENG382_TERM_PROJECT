@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.DataProtection;
 using CENG382_TERM_PROJECT.Utils;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CENG382_TERM_PROJECT.Pages.Auth
 {
@@ -15,12 +16,13 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
         private readonly AppDbContext _context;
 		private readonly IDataProtector _protector;
         private readonly IConfiguration _configuration;
-
-        public LoginModel(AppDbContext context, IDataProtectionProvider provider, IConfiguration configuration)
+        private readonly IMemoryCache _cache;
+        public LoginModel(AppDbContext context, IDataProtectionProvider provider, IConfiguration configuration, IMemoryCache cache)
         {
             _context = context;
             _protector = provider.CreateProtector("CENG382_TERM_PROJECT_CookieProtector");
             _configuration = configuration;
+            _cache = cache;
         }
 
         [BindProperty]
@@ -93,6 +95,7 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
                 await _context.SaveChangesAsync();
 
                 ErrorMessage = "Geçersiz email veya şifre.";
+                await Task.Delay(Random.Shared.Next(500, 1500));
                 return Page();
             }
 
@@ -125,15 +128,22 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
 			HttpContext.Session.SetString("username", user.Email);
 			HttpContext.Session.SetString("token", token);
 			HttpContext.Session.SetString("session_id", sessionId);
+            _cache.Set(user.Email + "_token", token, TimeSpan.FromMinutes(30));
 
             Response.Cookies.Append("username", _protector.Protect(user.Email), cookieOptions);
             Response.Cookies.Append("token", _protector.Protect(token), cookieOptions);
             Response.Cookies.Append("session_id", _protector.Protect(sessionId), cookieOptions);
 
             if (user.Role == "Instructor")
+            {
+                await Task.Delay(Random.Shared.Next(500, 1500));
                 return RedirectToPage("/Instructor/Index");
+            }
             else if (user.Role == "Admin")
-                return RedirectToPage("/Admin/Index");
+                {
+                await Task.Delay(Random.Shared.Next(500, 1500));
+                return RedirectToPage("/Admin/Index"); 
+            }
 			return RedirectToPage("/Index");
         }
     }
