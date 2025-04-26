@@ -6,11 +6,11 @@
 
 <h2>Admin Panel</h2>
 
-<button class="btn btn-primary mb-3" onclick="toggleForm()">Yeni Instructor Ekle</button>
+<button id="toggleButton" class="btn btn-primary mb-3">Yeni Instructor Ekle</button>
 
-<div id="instructorForm" style="display:none;">
+<div id="instructorForm">
     <h4>Yeni Instructor Ekle</h4>
-    <form method="post">
+    <form id="instructorFormElement" method="post">
         <div class="mb-2">
             <label>Ad Soyad</label>
             <input type="text" name="FullName" class="form-control" />
@@ -25,18 +25,13 @@
         </div>
         <button type="submit" class="btn btn-success">Instructor Ekle</button>
     </form>
-
-    @if (!string.IsNullOrEmpty(Model.Message))
-    {
-        <div class="alert alert-info mt-3">@Model.Message</div>
-    }
 </div>
 
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-info mt-3">@Model.Message</div>
+}
+
 @section Scripts {
-    <script>
-        function toggleForm() {
-            const form = document.getElementById("instructorForm");
-            form.style.display = form.style.display === "none" ? "block" : "none";
-        }
-    </script>
+    <script src="~/js/admin.js"></script>
 }
