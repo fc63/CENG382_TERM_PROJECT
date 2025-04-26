@@ -121,9 +121,9 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
 			HttpContext.Session.SetString("token", token);
 			HttpContext.Session.SetString("session_id", sessionId);
 
-			Response.Cookies.Append("username", user.Email, cookieOptions);
-			Response.Cookies.Append("token", token, cookieOptions);
-			Response.Cookies.Append("session_id", sessionId, cookieOptions);
+            Response.Cookies.Append("username", _protector.Protect(user.Email), cookieOptions);
+            Response.Cookies.Append("token", _protector.Protect(token), cookieOptions);
+            Response.Cookies.Append("session_id", _protector.Protect(sessionId), cookieOptions);
 
             if (user.Role == "Instructor")
                 return RedirectToPage("/Instructor/Index");

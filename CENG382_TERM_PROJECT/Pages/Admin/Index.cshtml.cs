@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using CENG382_TERM_PROJECT.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace CENG382_TERM_PROJECT.Pages.Admin
 {
@@ -16,11 +17,46 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
 			var sessionToken = HttpContext.Session.GetString("token");
 			var sessionId = HttpContext.Session.GetString("session_id");
 
-			Request.Cookies.TryGetValue("username", out var cookieUsername);
-			Request.Cookies.TryGetValue("token", out var cookieToken);
-			Request.Cookies.TryGetValue("session_id", out var cookieSessionId);
+            Request.Cookies.TryGetValue("username", out var protectedUsername);
+            Request.Cookies.TryGetValue("token", out var protectedToken);
+            Request.Cookies.TryGetValue("session_id", out var protectedSessionId);
 
-			if (sessionUsername != cookieUsername || sessionToken != cookieToken || sessionId != cookieSessionId)
+            string cookieUsername = null;
+            string cookieToken = null;
+            string cookieSessionId = null;
+
+            try
+            {
+                if (!string.IsNullOrEmpty(protectedUsername))
+                    cookieUsername = _protector.Unprotect(protectedUsername);
+            }
+            catch
+            {
+                cookieUsername = null;
+            }
+
+            try
+            {
+                if (!string.IsNullOrEmpty(protectedToken))
+                    cookieToken = _protector.Unprotect(protectedToken);
+            }
+            catch
+            {
+                cookieToken = null;
+            }
+
+            try
+            {
+                if (!string.IsNullOrEmpty(protectedSessionId))
+                    cookieSessionId = _protector.Unprotect(protectedSessionId);
+            }
+            catch
+            {
+                cookieSessionId = null;
+            }
+
+
+            if (sessionUsername != cookieUsername || sessionToken != cookieToken || sessionId != cookieSessionId)
 			{
 				HttpContext.Session.Clear();
 				Response.Cookies.Delete("username");
@@ -31,16 +67,18 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
 			return Page();
         }
 		private readonly AppDbContext _context;
+        private readonly IDataProtector _protector;
 
-		[BindProperty] public string FullName { get; set; }
+        [BindProperty] public string FullName { get; set; }
 		[BindProperty] public string Email { get; set; }
 		[BindProperty] public string Password { get; set; }
 		public string Message { get; set; }
 
-		public IndexModel(AppDbContext context)
-		{
+        public IndexModel(AppDbContext context, IDataProtectionProvider provider)
+        {
 			_context = context;
-		}
+            _protector = provider.CreateProtector("CENG382_TERM_PROJECT_CookieProtector");
+        }
 		public async Task<IActionResult> OnPostAsync()
 		{
 			var sessionUsername = HttpContext.Session.GetString("username");
