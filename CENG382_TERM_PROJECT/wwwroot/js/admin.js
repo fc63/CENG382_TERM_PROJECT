@@ -2,7 +2,7 @@
 import { setupListManager } from "./modules/listManager.js";
 import { setupEditButtons } from "./modules/editManager.js";
 import { setupAlertManager } from "./modules/alertManager.js";
-import { getPageParams } from "./modules/pageParams.js";
+import { setupPageState } from "./modules/pageManager.js";
 
 document.addEventListener("DOMContentLoaded", function () {
     const toggleButton = document.getElementById("toggleButton");
@@ -16,24 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const cancelButton = document.getElementById("cancelButton");
     const messageDiv = document.querySelector(".alert");
 
-    const { showForm, showList, showFormParam, showListParam, pageNumber, searchTerm } = getPageParams();
-
-    if (formDiv) formDiv.style.display = "none";
-    if (instructorListDiv) instructorListDiv.style.display = "none";
-
-    if (showForm === "True" || showFormParam === "True") {
-        formDiv.style.display = "block";
-        instructorListDiv.style.display = "none";
-        toggleButton.textContent = "Kapat";
-        toggleListButton.textContent = "Instructor Listesi";
-        cancelButton.style.display = "none";
-    } else if (showList === "True" || showListParam === "True" || pageNumber !== null || (searchTerm && searchTerm.trim() !== "")) {
-        instructorListDiv.style.display = "block";
-        formDiv.style.display = "none";
-        toggleButton.textContent = "Yeni Instructor Ekle";
-        toggleListButton.textContent = "Kapat";
-    }
-
+	setupPageState(formDiv, instructorListDiv, toggleButton, toggleListButton, cancelButton);
     setupFormManager(toggleButton, toggleListButton, formDiv, formElement, instructorListDiv, editingIdInput, formTitle, submitButton, cancelButton);
     setupListManager(toggleListButton, instructorListDiv, formDiv, toggleButton, editingIdInput, formElement);
     setupEditButtons(formDiv, instructorListDiv, toggleButton, toggleListButton, formElement, editingIdInput, formTitle, submitButton, cancelButton);
