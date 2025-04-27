@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CENG382_TERM_PROJECT.Models;
 using CENG382_TERM_PROJECT.Services;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace CENG382_TERM_PROJECT.Pages.Admin
 {
@@ -22,17 +20,10 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
             if (validationResult != null)
                 return validationResult;
 
-            ViewData["ShowList"] = ShowList;
-            ViewData["ShowForm"] = ShowForm;
-
             int pageSize = 10;
-            (var instructors, var totalPages) = _paginationService.GetPaginatedInstructors(SearchTerm, PageNumber);
-            PaginatedInstructors = instructors;
-            TotalPages = totalPages;
-            CurrentPage = PageNumber;
+            RefreshPagination();
             return Page();
         }
-        private readonly AppDbContext _context;
         private readonly ISessionService _sessionService;
         private readonly IInstructorService _instructorService;
         private readonly IPaginationService _paginationService;
@@ -43,7 +34,6 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
 		[BindProperty] public string Password { get; set; }
         [BindProperty] public int? EditingId { get; set; }
         public string Message { get; set; }
-        public List<User> Instructors { get; set; }
         [BindProperty(SupportsGet = true)]
         public string SearchTerm { get; set; }
         [BindProperty(SupportsGet = true)]
@@ -51,13 +41,19 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
         public int TotalPages { get; set; }
         public int CurrentPage { get; set; }
         public List<User> PaginatedInstructors { get; set; }
-        public IndexModel(AppDbContext context, ISessionService sessionService, IInstructorService instructorService, IPaginationService paginationService, IPasswordService passwordService)
+        public IndexModel(ISessionService sessionService, IInstructorService instructorService, IPaginationService paginationService, IPasswordService passwordService)
         {
-            _context = context;
             _sessionService = sessionService;
             _instructorService = instructorService;
             _paginationService = paginationService;
             _passwordService = passwordService;
+        }
+        private void RefreshPagination()
+        {
+            (var paginatedInstructors, var totalPages) = _paginationService.GetPaginatedInstructors(SearchTerm, PageNumber);
+            PaginatedInstructors = paginatedInstructors;
+            TotalPages = totalPages;
+            CurrentPage = PageNumber;
         }
         public async Task<IActionResult> OnPostAsync()
         {
@@ -65,16 +61,10 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
             if (validationResult != null)
                 return validationResult;
 
-            IQueryable<User> instructorsQuery = null;
-            int totalRecords = 0;
-
             if (string.IsNullOrEmpty(FullName) || string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
             {
                 Message = "Tüm alanları doldurun.";
-                (var instructors, var totalPages) = _paginationService.GetPaginatedInstructors(SearchTerm, PageNumber);
-                PaginatedInstructors = instructors;
-                TotalPages = totalPages;
-                CurrentPage = PageNumber;
+                RefreshPagination();
                 return RedirectToPage(new { showForm = true });
             }
 
@@ -115,8 +105,6 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
             if (validationResult != null)
                 return validationResult;
 
-            IQueryable<User> instructorsQuery = null;
-            int totalRecords = 0;
     var deleteResult = await _instructorService.DeleteInstructorAsync(id);
     if (deleteResult)
     {
@@ -126,10 +114,7 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
     {
         Message = "Silme işlemi başarısız.";
     }
-            (var instructors, var totalPages) = _paginationService.GetPaginatedInstructors(SearchTerm, PageNumber);
-            PaginatedInstructors = instructors;
-            TotalPages = totalPages;
-            CurrentPage = PageNumber;
+            RefreshPagination();
             return RedirectToPage(new { showList = true });
         }
     }
