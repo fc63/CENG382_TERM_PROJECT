@@ -63,9 +63,12 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
 
             if (string.IsNullOrEmpty(FullName) || string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
             {
+                if(!EditingId.HasValue)
+                {
+                    RefreshPagination();
+                    return RedirectToPage(new { showForm = true });
+                }
                 Message = "Tüm alanları doldurun.";
-                RefreshPagination();
-                return RedirectToPage(new { showForm = true });
             }
 
             var hashedPassword = _passwordService.HashPassword(Password);
