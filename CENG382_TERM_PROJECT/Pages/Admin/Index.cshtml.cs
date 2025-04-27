@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CENG382_TERM_PROJECT.Models;
+using CENG382_TERM_PROJECT.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Microsoft.AspNetCore.DataProtection;
@@ -19,95 +20,27 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
         public bool ShowForm { get; set; }
         public IActionResult OnGet()
         {
+            var validationResult = _sessionService.ValidateSessionAndCookies(HttpContext, this);
+            if (validationResult != null)
+                return validationResult;
+
             ViewData["ShowList"] = ShowList;
             ViewData["ShowForm"] = ShowForm;
 
-            var sessionUsername = HttpContext.Session.GetString("username");
-            var sessionToken = HttpContext.Session.GetString("token");
-            var sessionId = HttpContext.Session.GetString("session_id");
-
-            Request.Cookies.TryGetValue("username", out var protectedUsername);
-            Request.Cookies.TryGetValue("token", out var protectedToken);
-            Request.Cookies.TryGetValue("session_id", out var protectedSessionId);
-            string cookieUsername = protectedUsername;
-            string cookieToken = protectedToken;
-            string cookieSessionId = protectedSessionId;
-            string decryptedUsername = null;
-            string decryptedToken = null;
-            string decryptedSessionId = null;
-
-            try
-            {
-                if (!string.IsNullOrEmpty(cookieUsername))
-                    decryptedUsername = _protector.Unprotect(cookieUsername);
-            }
-            catch
-            {
-                decryptedUsername = null;
-            }
-
-            try
-            {
-                if (!string.IsNullOrEmpty(cookieToken))
-                    decryptedToken = _protector.Unprotect(cookieToken);
-            }
-            catch
-            {
-                decryptedToken = null;
-            }
-
-            try
-            {
-                if (!string.IsNullOrEmpty(cookieSessionId))
-                    decryptedSessionId = _protector.Unprotect(cookieSessionId);
-            }
-            catch
-            {
-                decryptedSessionId = null;
-            }
-            if (sessionUsername != decryptedUsername || sessionToken != decryptedToken || sessionId != decryptedSessionId)
-            {
-                HttpContext.Session.Clear();
-                Response.Cookies.Delete("username");
-                Response.Cookies.Delete("token");
-                Response.Cookies.Delete("session_id");
-                return RedirectToPage("/Auth/Login");
-            }
-            var cacheToken = _cache.Get<string>(sessionUsername + "_token");
-
-            if (cacheToken == null || cacheToken != sessionToken)
-            {
-                HttpContext.Session.Clear();
-                Response.Cookies.Delete("username");
-                Response.Cookies.Delete("token");
-                Response.Cookies.Delete("session_id");
-                return RedirectToPage("/Auth/Login");
-            }
             int pageSize = 10;
-            var instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").ToList().AsQueryable();
-
-            if (!string.IsNullOrEmpty(SearchTerm))
-            {
-                instructorsQuery = instructorsQuery.Where(i =>
-                    i.FullName.Contains(SearchTerm) ||
-                    (i.Email.Contains("@") && i.Email.Substring(0, i.Email.IndexOf('@')).Contains(SearchTerm))
-                );
-            }
-
-            int totalRecords = instructorsQuery.Count();
-            TotalPages = (int)Math.Ceiling(totalRecords / 10.0);
+            (var instructors, var totalPages) = _paginationService.GetPaginatedInstructors(SearchTerm, PageNumber);
+            PaginatedInstructors = instructors;
+            TotalPages = totalPages;
             CurrentPage = PageNumber;
-            PaginatedInstructors = instructorsQuery
-                .OrderBy(i => i.FullName)
-                .Skip((PageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
             return Page();
         }
         private readonly AppDbContext _context;
         private readonly IDataProtector _protector;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
+        private readonly SessionService _sessionService;
+        private readonly InstructorService _instructorService;
+        private readonly PaginationService _paginationService;
 
         [BindProperty] public string FullName { get; set; }
 		[BindProperty] public string Email { get; set; }
@@ -128,83 +61,26 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
             _protector = provider.CreateProtector("CENG382_TERM_PROJECT_CookieProtector");
             _configuration = configuration;
             _cache = cache;
+            _sessionService = new SessionService(_protector, _cache);
+            _instructorService = new InstructorService(context);
+            _paginationService = new PaginationService(context);
         }
         public async Task<IActionResult> OnPostAsync()
         {
+            var validationResult = _sessionService.ValidateSessionAndCookies(HttpContext, this);
+            if (validationResult != null)
+                return validationResult;
+
             IQueryable<User> instructorsQuery = null;
             int totalRecords = 0;
-            var sessionUsername = HttpContext.Session.GetString("username");
-            var sessionToken = HttpContext.Session.GetString("token");
-            var sessionId = HttpContext.Session.GetString("session_id");
-
-            Request.Cookies.TryGetValue("username", out var cookieUsername);
-            Request.Cookies.TryGetValue("token", out var cookieToken);
-            Request.Cookies.TryGetValue("session_id", out var cookieSessionId);
-
-            string decryptedUsername = null;
-            string decryptedToken = null;
-            string decryptedSessionId = null;
-
-            try
-            {
-                if (!string.IsNullOrEmpty(cookieUsername))
-                    decryptedUsername = _protector.Unprotect(cookieUsername);
-            }
-            catch { decryptedUsername = null; }
-
-            try
-            {
-                if (!string.IsNullOrEmpty(cookieToken))
-                    decryptedToken = _protector.Unprotect(cookieToken);
-            }
-            catch { decryptedToken = null; }
-
-            try
-            {
-                if (!string.IsNullOrEmpty(cookieSessionId))
-                    decryptedSessionId = _protector.Unprotect(cookieSessionId);
-            }
-            catch { decryptedSessionId = null; }
-
-            if (sessionUsername != decryptedUsername || sessionToken != decryptedToken || sessionId != decryptedSessionId)
-            {
-                HttpContext.Session.Clear();
-                Response.Cookies.Delete("username");
-                Response.Cookies.Delete("token");
-                Response.Cookies.Delete("session_id");
-                return RedirectToPage("/Auth/Login");
-            }
-
-            var cacheToken = _cache.Get<string>(sessionUsername + "_token");
-
-            if (cacheToken == null || cacheToken != sessionToken)
-            {
-                HttpContext.Session.Clear();
-                Response.Cookies.Delete("username");
-                Response.Cookies.Delete("token");
-                Response.Cookies.Delete("session_id");
-                return RedirectToPage("/Auth/Login");
-            }
 
             if (string.IsNullOrEmpty(FullName) || string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
             {
                 Message = "Tüm alanları doldurun.";
-                instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").AsQueryable();
-
-                if (!string.IsNullOrEmpty(SearchTerm))
-                {
-                    instructorsQuery = instructorsQuery.Where(i =>
-                        i.FullName.Contains(SearchTerm) ||
-                        (i.Email.Contains("@") && i.Email.Substring(0, i.Email.IndexOf('@')).Contains(SearchTerm))
-                    );
-                }
-                totalRecords = instructorsQuery.Count();
-                TotalPages = (int)Math.Ceiling(totalRecords / 10.0);
-                PaginatedInstructors = instructorsQuery
-                    .OrderBy(i => i.FullName)
-                    .Take(10)
-                    .ToList();
-                CurrentPage = 1;
+                (var instructors, var totalPages) = _paginationService.GetPaginatedInstructors(SearchTerm, PageNumber);
+                PaginatedInstructors = instructors;
+                TotalPages = totalPages;
+                CurrentPage = PageNumber;
                 return RedirectToPage(new { showForm = true });
             }
 
@@ -214,123 +90,55 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
 
             if (EditingId.HasValue)
             {
-                var instructorToUpdate = await _context.Users.FindAsync(EditingId.Value);
-                if (instructorToUpdate != null && instructorToUpdate.Role == "Instructor")
+                var updateResult = await _instructorService.UpdateInstructorAsync(EditingId.Value, FullName, Email, hashedPassword);
+                if (updateResult)
                 {
-                    instructorToUpdate.FullName = FullName;
-                    instructorToUpdate.Email = Email;
-                    instructorToUpdate.PasswordHash = hashedPassword;
-
-                    await _context.SaveChangesAsync();
                     Message = "Instructor başarıyla güncellendi.";
-                    instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").AsQueryable();
-
-                    if (!string.IsNullOrEmpty(SearchTerm))
-                    {
-                        instructorsQuery = instructorsQuery.Where(i =>
-                            i.FullName.Contains(SearchTerm) ||
-                            (i.Email.Contains("@") && i.Email.Substring(0, i.Email.IndexOf('@')).Contains(SearchTerm))
-                        );
-                    }
-
-                    totalRecords = instructorsQuery.Count();
-                    TotalPages = (int)Math.Ceiling(totalRecords / 10.0);
-                    PaginatedInstructors = instructorsQuery
-                        .OrderBy(i => i.FullName)
-                        .Take(10)
-                        .ToList();
-                    CurrentPage = 1;
                     return RedirectToPage(new { showList = true });
+                }
+                else
+                {
+                    Message = "Güncelleme başarısız oldu.";
+                    return RedirectToPage(new { showForm = true });
                 }
             }
             else
             {
-                var existing = await _context.Users.FirstOrDefaultAsync(u => u.Email == Email);
-                if (existing != null)
+                var addResult = await _instructorService.AddInstructorAsync(FullName, Email, hashedPassword);
+                if (addResult)
                 {
-                    Message = "Bu email ile zaten bir kullanıcı var.";
-                    instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").AsQueryable();
-
-                    if (!string.IsNullOrEmpty(SearchTerm))
-                    {
-                        instructorsQuery = instructorsQuery.Where(i =>
-                            i.FullName.Contains(SearchTerm) ||
-                            (i.Email.Contains("@") && i.Email.Substring(0, i.Email.IndexOf('@')).Contains(SearchTerm))
-                        );
-                    }
-
-                    totalRecords = instructorsQuery.Count();
-                    TotalPages = (int)Math.Ceiling(totalRecords / 10.0);
-                    PaginatedInstructors = instructorsQuery
-                        .OrderBy(i => i.FullName)
-                        .Take(10)
-                        .ToList();
-                    CurrentPage = 1;
+                    Message = "Instructor başarıyla eklendi.";
                     return RedirectToPage(new { showForm = true });
                 }
-
-                var newInstructor = new User
+                else
                 {
-                    FullName = FullName,
-                    Email = Email,
-                    PasswordHash = hashedPassword,
-                    Role = "Instructor"
-                };
-
-                _context.Users.Add(newInstructor);
-                await _context.SaveChangesAsync();
-
-                Message = "Instructor başarıyla eklendi.";
-                instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").AsQueryable();
-
-                if (!string.IsNullOrEmpty(SearchTerm))
-                {
-                    instructorsQuery = instructorsQuery.Where(i =>
-                        i.FullName.Contains(SearchTerm) ||
-                        (i.Email.Contains("@") && i.Email.Substring(0, i.Email.IndexOf('@')).Contains(SearchTerm))
-                    );
+                    Message = "Bu email ile zaten bir kullanıcı var.";
+                    return RedirectToPage(new { showForm = true });
                 }
-
-                totalRecords = instructorsQuery.Count();
-                TotalPages = (int)Math.Ceiling(totalRecords / 10.0);
-                PaginatedInstructors = instructorsQuery
-                    .OrderBy(i => i.FullName)
-                    .Take(10)
-                    .ToList();
-                CurrentPage = 1;
             }
-            return RedirectToPage(new { showForm = true });
         }
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
+            var validationResult = _sessionService.ValidateSessionAndCookies(HttpContext, this);
+            if (validationResult != null)
+                return validationResult;
+
             IQueryable<User> instructorsQuery = null;
             int totalRecords = 0;
-            var instructor = await _context.Users.FindAsync(id);
-            if (instructor != null && instructor.Role == "Instructor")
-            {
-                _context.Users.Remove(instructor);
-                await _context.SaveChangesAsync();
-                Message = "Instructor başarıyla silindi.";
-            }
-            instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").AsQueryable();
-
-            if (!string.IsNullOrEmpty(SearchTerm))
-            {
-                instructorsQuery = instructorsQuery.Where(i =>
-                    i.FullName.Contains(SearchTerm) ||
-                    (i.Email.Contains("@") && i.Email.Substring(0, i.Email.IndexOf('@')).Contains(SearchTerm))
-                );
-            }
-
-            totalRecords = instructorsQuery.Count();
-            TotalPages = (int)Math.Ceiling(totalRecords / 10.0);
-            PaginatedInstructors = instructorsQuery
-                .OrderBy(i => i.FullName)
-                .Take(10)
-                .ToList();
-            CurrentPage = 1;
+    var deleteResult = await _instructorService.DeleteInstructorAsync(id);
+    if (deleteResult)
+    {
+        Message = "Instructor başarıyla silindi.";
+    }
+    else
+    {
+        Message = "Silme işlemi başarısız.";
+    }
+            (var instructors, var totalPages) = _paginationService.GetPaginatedInstructors(SearchTerm, PageNumber);
+            PaginatedInstructors = instructors;
+            TotalPages = totalPages;
+            CurrentPage = PageNumber;
             return RedirectToPage(new { showList = true });
         }
-
     }
 }
