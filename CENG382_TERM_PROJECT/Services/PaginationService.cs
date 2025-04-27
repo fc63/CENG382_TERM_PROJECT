@@ -2,7 +2,7 @@ using CENG382_TERM_PROJECT.Models;
 
 namespace CENG382_TERM_PROJECT.Services
 {
-    public class PaginationService
+    public class PaginationService : IPaginationService
     {
         private readonly AppDbContext _context;
 

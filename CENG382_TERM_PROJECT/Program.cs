@@ -1,6 +1,7 @@
 using CENG382_TERM_PROJECT.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.DataProtection;
+using CENG382_TERM_PROJECT.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,7 +48,10 @@ builder.Services.AddAuthorization(options =>
 	builder.Services.AddHttpContextAccessor();
 	
 	builder.Services.AddMemoryCache();
-	
+	builder.Services.AddScoped<ISessionService, SessionService>();
+	builder.Services.AddScoped<IInstructorService, InstructorService>();
+	builder.Services.AddScoped<IPaginationService, PaginationService>();
+	builder.Services.AddScoped<IPasswordService, PasswordService>();
 	builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);

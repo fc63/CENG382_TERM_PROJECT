@@ -6,14 +6,14 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace CENG382_TERM_PROJECT.Services
 {
-    public class SessionService
+    public class SessionService : ISessionService
     {
         private readonly IDataProtector _protector;
         private readonly IMemoryCache _cache;
 
-        public SessionService(IDataProtector protector, IMemoryCache cache)
+        public SessionService(IDataProtectionProvider provider, IMemoryCache cache)
         {
-            _protector = protector;
+            _protector = provider.CreateProtector("CENG382_TERM_PROJECT_CookieProtector");
             _cache = cache;
         }
 

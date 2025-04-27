@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CENG382_TERM_PROJECT.Services
 {
-    public class InstructorService
+    public class InstructorService : IInstructorService
     {
         private readonly AppDbContext _context;
 

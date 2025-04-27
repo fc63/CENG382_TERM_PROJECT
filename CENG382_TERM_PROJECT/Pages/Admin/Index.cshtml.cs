@@ -33,12 +33,10 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
             return Page();
         }
         private readonly AppDbContext _context;
-        private readonly IDataProtector _protector;
-        private readonly IConfiguration _configuration;
-        private readonly IMemoryCache _cache;
-        private readonly SessionService _sessionService;
-        private readonly InstructorService _instructorService;
-        private readonly PaginationService _paginationService;
+        private readonly ISessionService _sessionService;
+        private readonly IInstructorService _instructorService;
+        private readonly IPaginationService _paginationService;
+        private readonly IPasswordService _passwordService;
 
         [BindProperty] public string FullName { get; set; }
 		[BindProperty] public string Email { get; set; }
@@ -53,15 +51,13 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
         public int TotalPages { get; set; }
         public int CurrentPage { get; set; }
         public List<User> PaginatedInstructors { get; set; }
-        public IndexModel(AppDbContext context, IDataProtectionProvider provider, IConfiguration configuration, IMemoryCache cache)
+        public IndexModel(AppDbContext context, ISessionService sessionService, IInstructorService instructorService, IPaginationService paginationService, IPasswordService passwordService)
         {
             _context = context;
-            _protector = provider.CreateProtector("CENG382_TERM_PROJECT_CookieProtector");
-            _configuration = configuration;
-            _cache = cache;
-            _sessionService = new SessionService(_protector, _cache);
-            _instructorService = new InstructorService(context);
-            _paginationService = new PaginationService(context);
+            _sessionService = sessionService;
+            _instructorService = instructorService;
+            _paginationService = paginationService;
+            _passwordService = passwordService;
         }
         public async Task<IActionResult> OnPostAsync()
         {
@@ -82,9 +78,7 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
                 return RedirectToPage(new { showForm = true });
             }
 
-            var pepper = _configuration["Security:Pepper"];
-            var passwordWithPepper = Password + pepper;
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(passwordWithPepper);
+            var hashedPassword = _passwordService.HashPassword(Password);
 
             if (EditingId.HasValue)
             {
