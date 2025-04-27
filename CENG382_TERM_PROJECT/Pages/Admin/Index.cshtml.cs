@@ -12,8 +12,16 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
 	[Authorize(Roles = "Admin")]
     public class IndexModel : PageModel
     {
+        [BindProperty(SupportsGet = true)]
+        public bool ShowList { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public bool ShowForm { get; set; }
         public IActionResult OnGet()
         {
+            ViewData["ShowList"] = ShowList;
+            ViewData["ShowForm"] = ShowForm;
+
             var sessionUsername = HttpContext.Session.GetString("username");
             var sessionToken = HttpContext.Session.GetString("token");
             var sessionId = HttpContext.Session.GetString("session_id");
@@ -75,7 +83,25 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
                 Response.Cookies.Delete("session_id");
                 return RedirectToPage("/Auth/Login");
             }
-            Instructors = _context.Users.Where(u => u.Role == "Instructor").ToList();
+            int pageSize = 10;
+            var instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").ToList().AsQueryable();
+
+            if (!string.IsNullOrEmpty(SearchTerm))
+            {
+                instructorsQuery = instructorsQuery.Where(i =>
+                    i.FullName.Contains(SearchTerm) ||
+                    (i.Email.Contains("@") && i.Email.Substring(0, i.Email.IndexOf('@')).Contains(SearchTerm))
+                );
+            }
+
+            int totalRecords = instructorsQuery.Count();
+            TotalPages = (int)Math.Ceiling(totalRecords / 10.0);
+            CurrentPage = PageNumber;
+            PaginatedInstructors = instructorsQuery
+                .OrderBy(i => i.FullName)
+                .Skip((PageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
             return Page();
         }
         private readonly AppDbContext _context;
@@ -89,6 +115,13 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
         [BindProperty] public int? EditingId { get; set; }
         public string Message { get; set; }
         public List<User> Instructors { get; set; }
+        [BindProperty(SupportsGet = true)]
+        public string SearchTerm { get; set; }
+        [BindProperty(SupportsGet = true)]
+        public int PageNumber { get; set; } = 1;
+        public int TotalPages { get; set; }
+        public int CurrentPage { get; set; }
+        public List<User> PaginatedInstructors { get; set; }
         public IndexModel(AppDbContext context, IDataProtectionProvider provider, IConfiguration configuration, IMemoryCache cache)
         {
             _context = context;
@@ -98,6 +131,8 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
         }
         public async Task<IActionResult> OnPostAsync()
         {
+            IQueryable<User> instructorsQuery = null;
+            int totalRecords = 0;
             var sessionUsername = HttpContext.Session.GetString("username");
             var sessionToken = HttpContext.Session.GetString("token");
             var sessionId = HttpContext.Session.GetString("session_id");
@@ -154,8 +189,23 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
             if (string.IsNullOrEmpty(FullName) || string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
             {
                 Message = "Tüm alanları doldurun.";
-                Instructors = _context.Users.Where(u => u.Role == "Instructor").ToList();
-                return Page();
+                instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").AsQueryable();
+
+                if (!string.IsNullOrEmpty(SearchTerm))
+                {
+                    instructorsQuery = instructorsQuery.Where(i =>
+                        i.FullName.Contains(SearchTerm) ||
+                        (i.Email.Contains("@") && i.Email.Substring(0, i.Email.IndexOf('@')).Contains(SearchTerm))
+                    );
+                }
+                totalRecords = instructorsQuery.Count();
+                TotalPages = (int)Math.Ceiling(totalRecords / 10.0);
+                PaginatedInstructors = instructorsQuery
+                    .OrderBy(i => i.FullName)
+                    .Take(10)
+                    .ToList();
+                CurrentPage = 1;
+                return RedirectToPage(new { showForm = true });
             }
 
             var pepper = _configuration["Security:Pepper"];
@@ -173,7 +223,24 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
 
                     await _context.SaveChangesAsync();
                     Message = "Instructor başarıyla güncellendi.";
-                    Instructors = _context.Users.Where(u => u.Role == "Instructor").ToList();
+                    instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").AsQueryable();
+
+                    if (!string.IsNullOrEmpty(SearchTerm))
+                    {
+                        instructorsQuery = instructorsQuery.Where(i =>
+                            i.FullName.Contains(SearchTerm) ||
+                            (i.Email.Contains("@") && i.Email.Substring(0, i.Email.IndexOf('@')).Contains(SearchTerm))
+                        );
+                    }
+
+                    totalRecords = instructorsQuery.Count();
+                    TotalPages = (int)Math.Ceiling(totalRecords / 10.0);
+                    PaginatedInstructors = instructorsQuery
+                        .OrderBy(i => i.FullName)
+                        .Take(10)
+                        .ToList();
+                    CurrentPage = 1;
+                    return RedirectToPage(new { showList = true });
                 }
             }
             else
@@ -182,8 +249,24 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
                 if (existing != null)
                 {
                     Message = "Bu email ile zaten bir kullanıcı var.";
-                    Instructors = _context.Users.Where(u => u.Role == "Instructor").ToList();
-                    return Page();
+                    instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").AsQueryable();
+
+                    if (!string.IsNullOrEmpty(SearchTerm))
+                    {
+                        instructorsQuery = instructorsQuery.Where(i =>
+                            i.FullName.Contains(SearchTerm) ||
+                            (i.Email.Contains("@") && i.Email.Substring(0, i.Email.IndexOf('@')).Contains(SearchTerm))
+                        );
+                    }
+
+                    totalRecords = instructorsQuery.Count();
+                    TotalPages = (int)Math.Ceiling(totalRecords / 10.0);
+                    PaginatedInstructors = instructorsQuery
+                        .OrderBy(i => i.FullName)
+                        .Take(10)
+                        .ToList();
+                    CurrentPage = 1;
+                    return RedirectToPage(new { showForm = true });
                 }
 
                 var newInstructor = new User
@@ -198,12 +281,30 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
                 await _context.SaveChangesAsync();
 
                 Message = "Instructor başarıyla eklendi.";
-                Instructors = _context.Users.Where(u => u.Role == "Instructor").ToList();
+                instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").AsQueryable();
+
+                if (!string.IsNullOrEmpty(SearchTerm))
+                {
+                    instructorsQuery = instructorsQuery.Where(i =>
+                        i.FullName.Contains(SearchTerm) ||
+                        (i.Email.Contains("@") && i.Email.Substring(0, i.Email.IndexOf('@')).Contains(SearchTerm))
+                    );
+                }
+
+                totalRecords = instructorsQuery.Count();
+                TotalPages = (int)Math.Ceiling(totalRecords / 10.0);
+                PaginatedInstructors = instructorsQuery
+                    .OrderBy(i => i.FullName)
+                    .Take(10)
+                    .ToList();
+                CurrentPage = 1;
             }
-            return Page();
+            return RedirectToPage(new { showForm = true });
         }
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
+            IQueryable<User> instructorsQuery = null;
+            int totalRecords = 0;
             var instructor = await _context.Users.FindAsync(id);
             if (instructor != null && instructor.Role == "Instructor")
             {
@@ -211,8 +312,24 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
                 await _context.SaveChangesAsync();
                 Message = "Instructor başarıyla silindi.";
             }
-            Instructors = _context.Users.Where(u => u.Role == "Instructor").ToList();
-            return Page();
+            instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").AsQueryable();
+
+            if (!string.IsNullOrEmpty(SearchTerm))
+            {
+                instructorsQuery = instructorsQuery.Where(i =>
+                    i.FullName.Contains(SearchTerm) ||
+                    (i.Email.Contains("@") && i.Email.Substring(0, i.Email.IndexOf('@')).Contains(SearchTerm))
+                );
+            }
+
+            totalRecords = instructorsQuery.Count();
+            TotalPages = (int)Math.Ceiling(totalRecords / 10.0);
+            PaginatedInstructors = instructorsQuery
+                .OrderBy(i => i.FullName)
+                .Take(10)
+                .ToList();
+            CurrentPage = 1;
+            return RedirectToPage(new { showList = true });
         }
 
     }

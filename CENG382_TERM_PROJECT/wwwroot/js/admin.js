@@ -10,8 +10,28 @@
     const cancelButton = document.getElementById("cancelButton");
     const messageDiv = document.querySelector(".alert");
 
-    if (formDiv) {
-        formDiv.style.display = "none";
+    if (formDiv) formDiv.style.display = "none";
+    if (instructorListDiv) instructorListDiv.style.display = "none";
+
+    const showForm = document.getElementById("showForm")?.value;
+    const showList = document.getElementById("showList")?.value;
+    const urlParams = new URLSearchParams(window.location.search);
+    const showFormParam = urlParams.get('showForm');
+    const showListParam = urlParams.get('showList');
+    const pageNumber = urlParams.get('pageNumber');
+    const searchTerm = urlParams.get('searchTerm');
+
+    if (showForm === "True" || showFormParam === "True") {
+        if (formDiv) formDiv.style.display = "block";
+        if (instructorListDiv) instructorListDiv.style.display = "none";
+        if (toggleButton) toggleButton.textContent = "Kapat";
+        if (toggleListButton) toggleListButton.textContent = "Instructor Listesi";
+        if (cancelButton) cancelButton.style.display = "none";
+    } else if (showList === "True" || showListParam === "True" || pageNumber !== null || (searchTerm && searchTerm.trim() !== "")) {
+        if (instructorListDiv) instructorListDiv.style.display = "block";
+        if (formDiv) formDiv.style.display = "none";
+        if (toggleButton) toggleButton.textContent = "Yeni Instructor Ekle";
+        if (toggleListButton) toggleListButton.textContent = "Kapat";
     }
 
     if (toggleButton) {
@@ -35,10 +55,6 @@
         });
     }
 
-    if (instructorListDiv) {
-        instructorListDiv.style.display = "none";
-    }
-
     if (toggleListButton) {
         toggleListButton.addEventListener("click", function () {
             if (instructorListDiv.style.display === "none" || instructorListDiv.style.display === "") {
@@ -54,6 +70,7 @@
             }
         });
     }
+
     if (cancelButton) {
         cancelButton.addEventListener("click", function () {
             if (toggleButton) toggleButton.style.display = "inline-block";
@@ -72,6 +89,14 @@
 
     document.querySelectorAll(".edit-btn").forEach(function (button) {
         button.addEventListener("click", function () {
+            let searchInput = document.querySelector('input[name="SearchTerm"]');
+            if (!searchInput) {
+                searchInput = document.createElement("input");
+                searchInput.type = "hidden";
+                searchInput.name = "SearchTerm";
+                formElement.appendChild(searchInput);
+            }
+            searchInput.value = "";
             if (toggleButton) toggleButton.style.display = "none";
             if (toggleListButton) toggleListButton.style.display = "none";
             const id = this.getAttribute("data-id");

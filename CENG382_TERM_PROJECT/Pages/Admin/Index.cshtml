@@ -4,6 +4,8 @@
     ViewData["Title"] = "Admin Panel";
     Layout = "_Layout";
 }
+<input type="hidden" id="showForm" value="@ViewData["ShowForm"]" />
+<input type="hidden" id="showList" value="@ViewData["ShowList"]" />
 
 <h2>Admin Panel</h2>
 
@@ -13,6 +15,23 @@
 
 <div id="instructorListDiv">
     <h4>Instructor Listesi</h4>
+    <form method="get" asp-page-handler="Filter">
+        <div class="input-group mb-3">
+            <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control" placeholder="İsim veya Email ara...">
+            <button type="submit" class="btn btn-primary">Ara</button>
+        </div>
+    </form>
+
+    <nav>
+        <ul class="pagination">
+            @for (var i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" asp-route-searchTerm="@Model.SearchTerm" asp-route-pageNumber="@i">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
     <table class="table table-bordered">
         <thead>
             <tr>
@@ -22,14 +41,14 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var instructor in Model.Instructors)
+            @foreach (var instructor in Model.PaginatedInstructors)
             {
                 <tr>
                     <td>@instructor.FullName</td>
                     <td>@instructor.Email</td>
                     <td>
                         <button class="btn btn-warning btn-sm edit-btn" data-id="@instructor.Id" data-name="@instructor.FullName" data-email="@instructor.Email">Düzenle</button>
-                        <form method="post" asp-page-handler="Delete" asp-route-id="@instructor.Id" style="display:inline;">
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@instructor.Id">
                             <button type="submit" class="btn btn-danger btn-sm">Sil</button>
                         </form>
                     </td>
@@ -56,7 +75,7 @@
             <input type="password" name="Password" class="form-control" />
         </div>
         <button id="submitButton" type="submit" class="btn btn-success">Instructor Ekle</button>
-        <button id="cancelButton" type="button" class="btn btn-secondary" style="display:none; margin-left: 10px;">Vazgeç</button>
+        <button id="cancelButton" type="button" class="btn btn-secondary" margin-left: 10px;">Vazgeç</button>
     </form>
 </div>
 

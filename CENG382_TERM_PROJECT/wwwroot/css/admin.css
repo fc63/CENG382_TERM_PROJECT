@@ -4,3 +4,10 @@
 #instructorListDiv {
     display: none;
 }
+#instructorListDiv form {
+    display: inline-block;
+    margin-left: 5px;
+}
+#instructorListDiv .edit-btn {
+    display: inline-block;
+}
