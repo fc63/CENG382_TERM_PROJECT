@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CENG382_TERM_PROJECT.Models;
 using CENG382_TERM_PROJECT.Services;
-using Microsoft.EntityFrameworkCore;
-using System.Text;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Caching.Memory;
 
