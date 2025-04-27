@@ -1,0 +1,87 @@
+﻿@page
+@model CENG382_TERM_PROJECT.Pages.Admin.UserManagement.IndexModel
+@{
+    ViewData["Title"] = "User Management";
+    Layout = "_Layout";
+}
+<input type="hidden" id="showForm" value="@ViewData["ShowForm"]" />
+<input type="hidden" id="showList" value="@ViewData["ShowList"]" />
+
+<h2>Admin Panel</h2>
+
+<button id="toggleButton" class="btn btn-primary mb-3">Yeni Instructor Ekle</button>
+
+<button id="toggleListButton" class="btn btn-secondary mb-3">Instructor Listesi</button>
+
+<div id="instructorListDiv">
+    <h4>Instructor Listesi</h4>
+    <form method="get" asp-page-handler="Filter">
+        <div class="input-group mb-3">
+            <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control" placeholder="İsim veya Email ara...">
+            <button type="submit" class="btn btn-primary">Ara</button>
+        </div>
+    </form>
+
+    <nav>
+        <ul class="pagination">
+            @for (var i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" asp-route-searchTerm="@Model.SearchTerm" asp-route-pageNumber="@i">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Ad Soyad</th>
+                <th>Email</th>
+                <th>İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var instructor in Model.PaginatedInstructors)
+            {
+                <tr>
+                    <td>@instructor.FullName</td>
+                    <td>@instructor.Email</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm edit-btn" data-id="@instructor.Id" data-name="@instructor.FullName" data-email="@instructor.Email">Düzenle</button>
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@instructor.Id">
+                            <button type="submit" class="btn btn-danger btn-sm">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div id="instructorForm">
+    <h4 id="formTitle">Yeni Instructor Ekle</h4>
+    <form id="instructorFormElement" asp-antiforgery="true" method="post">
+        <input type="hidden" id="editingId" name="EditingId" value="" />
+        <div class="mb-2">
+            <label>Ad Soyad</label>
+            <input type="text" name="FullName" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Email</label>
+            <input type="email" name="Email" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Şifre</label>
+            <input type="password" name="Password" class="form-control" />
+        </div>
+        <button id="submitButton" type="submit" class="btn btn-success">Instructor Ekle</button>
+        <button id="cancelButton" type="button" class="btn btn-secondary" margin-left: 10px;">Vazgeç</button>
+    </form>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin.css" />
+}
+@section Scripts {
+    <script type="module" src="~/js/admin.js"></script>
+}
