@@ -20,7 +20,11 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.UserManagement
             if (validationResult != null)
                 return validationResult;
 
-            int pageSize = 10;
+            if (PageNumber < 1)
+            {
+                PageNumber = 1;
+            }
+
             RefreshPagination();
             return Page();
         }
