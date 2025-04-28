@@ -29,10 +29,15 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.UserManagement
         private readonly IPaginationService _paginationService;
         private readonly IPasswordService _passwordService;
 
-        [BindProperty] public string FullName { get; set; }
-        [BindProperty] public string Email { get; set; }
-        [BindProperty] public string Password { get; set; }
-        [BindProperty] public int? EditingId { get; set; }
+        [BindProperty] 
+        public string FullName { get; set; }
+        [BindProperty] 
+        public string Email { get; set; }
+        [BindProperty] 
+        public string Password { get; set; }
+        [BindProperty] 
+        public int? EditingId { get; set; }
+        [TempData]
         public string Message { get; set; }
         [BindProperty(SupportsGet = true)]
         public string SearchTerm { get; set; }
