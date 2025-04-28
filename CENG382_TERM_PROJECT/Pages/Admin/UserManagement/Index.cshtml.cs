@@ -114,7 +114,8 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.UserManagement
             var deleteResult = await _instructorService.DeleteInstructorAsync(id);
             Message = deleteResult ? "Instructor baþarýyla silindi." : "Silme iþlemi baþarýsýz.";
 
-            return RedirectToPage(new { showList = true, pageNumber = pageNumber, searchTerm = searchTerm });
+            // þuanda 1. sayfaya yönlendiriyoruz, ileride bu deðiþtirilebilir.
+            return RedirectToPage(new { showList = true, pageNumber = 1, searchTerm = searchTerm });
         }
     }
 }

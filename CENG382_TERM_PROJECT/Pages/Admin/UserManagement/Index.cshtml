@@ -57,7 +57,7 @@
                     <td>@instructor.Email</td>
                     <td>
                         <button class="btn btn-warning btn-sm edit-btn" data-id="@instructor.Id" data-name="@instructor.FullName" data-email="@instructor.Email">Düzenle</button>
-                        <form method="post" asp-page-handler="Delete" asp-route-id="@instructor.Id" asp-route-pageNumber="@Model.CurrentPage" asp-route-searchTerm="@Model.SearchTerm">
+                        <form class="delete-form" method="post" asp-page-handler="Delete" asp-route-id="@instructor.Id" asp-route-pageNumber="@Model.CurrentPage" asp-route-searchTerm="@Model.SearchTerm">
                             <button type="submit" class="btn btn-danger btn-sm">Sil</button>
                         </form>
                     </td>
