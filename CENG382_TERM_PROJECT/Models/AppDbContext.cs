@@ -12,5 +12,7 @@ namespace CENG382_TERM_PROJECT.Models
 		public DbSet<FailedLoginAttempt> FailedLoginAttempts { get; set; }
 
         public DbSet<User> Users { get; set; }
+		
+		public DbSet<Term> Terms { get; set; }
     }
 }

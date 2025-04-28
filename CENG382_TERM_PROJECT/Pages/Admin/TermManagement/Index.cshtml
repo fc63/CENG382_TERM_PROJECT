@@ -1,0 +1,70 @@
+@page
+@model CENG382_TERM_PROJECT.Pages.Admin.TermManagement.IndexModel
+@{
+    ViewData["Title"] = "Term Yönetimi";
+    Layout = "_Layout";
+}
+<h2>Term Yönetimi</h2>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        @Model.Message
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Term Ekleme Formu -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h4>@(Model.EditingTerm != null ? "Term Düzenle" : "Yeni Term Ekle")</h4>
+        <form method="post">
+            <input type="hidden" asp-for="EditingTerm.Id" />
+            <div class="mb-3">
+                <label asp-for="EditingTerm.Name" class="form-label">Term Adı</label>
+                <input asp-for="EditingTerm.Name" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="EditingTerm.StartDate" class="form-label">Başlangıç Tarihi</label>
+                <input asp-for="EditingTerm.StartDate" class="form-control" type="date" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="EditingTerm.EndDate" class="form-label">Bitiş Tarihi</label>
+                <input asp-for="EditingTerm.EndDate" class="form-control" type="date" />
+            </div>
+            <button type="submit" class="btn btn-success">@(Model.EditingTerm != null ? "Güncelle" : "Ekle")</button>
+            @if (Model.EditingTerm != null)
+            {
+                <a asp-page="./Index" class="btn btn-secondary">İptal</a>
+            }
+        </form>
+    </div>
+</div>
+
+<!-- Term Listesi -->
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Adı</th>
+            <th>Başlangıç</th>
+            <th>Bitiş</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var term in Model.Terms)
+        {
+            <tr>
+                <td>@term.Name</td>
+                <td>@term.StartDate.ToString("yyyy-MM-dd")</td>
+                <td>@term.EndDate.ToString("yyyy-MM-dd")</td>
+                <td>
+                    <a asp-page="./Index" asp-route-id="@term.Id" class="btn btn-warning btn-sm">Düzenle</a>
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@term.Id" class="d-inline">
+                        <button type="submit" class="btn btn-danger btn-sm">Sil</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

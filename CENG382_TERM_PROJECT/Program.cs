@@ -52,6 +52,7 @@ builder.Services.AddAuthorization(options =>
 	builder.Services.AddScoped<IInstructorService, InstructorService>();
 	builder.Services.AddScoped<IPaginationService, PaginationService>();
 	builder.Services.AddScoped<IPasswordService, PasswordService>();
+	builder.Services.AddScoped<ITermService, TermService>();
 	builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
