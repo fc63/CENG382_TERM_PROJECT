@@ -1,0 +1,71 @@
+@page
+@model CENG382_TERM_PROJECT.Pages.Admin.ClassroomManagement.IndexModel
+@{
+    ViewData["Title"] = "Classroom Yönetimi";
+    Layout = "_Layout";
+}
+
+<h2>Classroom Yönetimi</h2>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        @Model.Message
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Classroom Ekleme/Düzenleme Formu -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h4>@(Model.EditingClassroom != null && Model.EditingClassroom.Id > 0 ? "Classroom Düzenle" : "Yeni Classroom Ekle")</h4>
+        <form method="post">
+            <input type="hidden" asp-for="EditingClassroom.Id" />
+            <div class="mb-3">
+                <label asp-for="EditingClassroom.Name" class="form-label">İsim</label>
+                <input asp-for="EditingClassroom.Name" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="EditingClassroom.Capacity" class="form-label">Kapasite</label>
+                <input asp-for="EditingClassroom.Capacity" type="number" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="EditingClassroom.Location" class="form-label">Lokasyon</label>
+                <input asp-for="EditingClassroom.Location" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-success">@(Model.EditingClassroom != null && Model.EditingClassroom.Id > 0 ? "Güncelle" : "Ekle")</button>
+            @if (Model.EditingClassroom != null && Model.EditingClassroom.Id > 0)
+            {
+                <a asp-page="./Index" class="btn btn-secondary">İptal</a>
+            }
+        </form>
+    </div>
+</div>
+
+<!-- Classroom Listesi -->
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>İsim</th>
+            <th>Kapasite</th>
+            <th>Lokasyon</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var classroom in Model.Classrooms)
+        {
+            <tr>
+                <td>@classroom.Name</td>
+                <td>@classroom.Capacity</td>
+                <td>@classroom.Location</td>
+                <td>
+                    <a asp-page="./Index" asp-route-id="@classroom.Id" class="btn btn-warning btn-sm">Düzenle</a>
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@classroom.Id" class="d-inline">
+                        <button type="submit" class="btn btn-danger btn-sm">Sil</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -13,5 +13,9 @@
         Hoşgeldin, @Model.Username
     </div>
 }
-<a class="btn btn-primary" href="/Admin/UserManagement">Instructor İşlemleri</a>
-<a asp-page="/Admin/TermManagement/Index" class="btn btn-info mb-3">Term Yönetimi</a>
+
+<div class="d-flex flex-wrap gap-3 mb-4">
+    <a class="btn btn-primary" href="/Admin/UserManagement">Instructor İşlemleri</a>
+    <a class="btn btn-info" asp-page="/Admin/TermManagement/Index">Term Yönetimi</a>
+    <a class="btn btn-warning" asp-page="/Admin/ClassroomManagement/Index">Classroom Yönetimi</a>
+</div>
