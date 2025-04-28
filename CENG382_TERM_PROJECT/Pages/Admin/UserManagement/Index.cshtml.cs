@@ -20,11 +20,6 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.UserManagement
             if (validationResult != null)
                 return validationResult;
 
-            if (PageNumber < 1)
-            {
-                PageNumber = 1;
-            }
-
             RefreshPagination();
             return Page();
         }
@@ -72,12 +67,11 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.UserManagement
 
             if (string.IsNullOrEmpty(FullName) || string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
             {
-                if (!EditingId.HasValue)
-                {
-                    RefreshPagination();
-                    return RedirectToPage(new { showForm = true });
-                }
                 Message = "Tüm alanlarý doldurun.";
+                if (!EditingId.HasValue)
+                    return RedirectToPage(new { showForm = true });
+                else
+                    return RedirectToPage(new { showList = true });
             }
 
             var hashedPassword = _passwordService.HashPassword(Password);
@@ -111,23 +105,16 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.UserManagement
                 }
             }
         }
-        public async Task<IActionResult> OnPostDeleteAsync(int id)
+        public async Task<IActionResult> OnPostDeleteAsync(int id, int pageNumber, string searchTerm)
         {
             var validationResult = _sessionService.ValidateSessionAndCookies(HttpContext, this);
             if (validationResult != null)
                 return validationResult;
 
             var deleteResult = await _instructorService.DeleteInstructorAsync(id);
-            if (deleteResult)
-            {
-                Message = "Instructor baþarýyla silindi.";
-            }
-            else
-            {
-                Message = "Silme iþlemi baþarýsýz.";
-            }
-            RefreshPagination();
-            return RedirectToPage(new { showList = true });
+            Message = deleteResult ? "Instructor baþarýyla silindi." : "Silme iþlemi baþarýsýz.";
+
+            return RedirectToPage(new { showList = true, pageNumber = pageNumber, searchTerm = searchTerm });
         }
     }
 }
