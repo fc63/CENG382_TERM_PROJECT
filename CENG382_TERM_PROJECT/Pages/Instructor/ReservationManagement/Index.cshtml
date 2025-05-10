@@ -1,0 +1,98 @@
+@page
+@model CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement.IndexModel
+@{
+    ViewData["Title"] = "Rezervasyon Yönetimi";
+    Layout = "_Layout";
+}
+
+<h2 class="mb-4">Rezervasyon Yönetimi</h2>
+
+<!-- Hata Mesajları -->
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger" role="alert">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@error.ErrorMessage</p>
+        }
+    </div>
+}
+
+
+<!-- Rezervasyon Ekle Butonu -->
+<div class="mb-4">
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#reservationModal">
+        Yeni Rezervasyon Ekle
+    </button>
+</div>
+
+<!-- Modal: Yeni Rezervasyon Formu -->
+<div class="modal fade" id="reservationModal" tabindex="-1" aria-labelledby="reservationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reservationModalLabel">Yeni Rezervasyon</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="ClassId" class="form-label">Classroom Seç</label>
+                        <select id="ClassId" name="ClassId" class="form-select" required>
+                            <option value="">-- Sınıf Seçin --</option>
+                            @foreach (var classroom in Model.AvailableClassrooms)
+                            {
+                                <option value="@classroom.Id">@classroom.Name (@classroom.Location)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="StartDateTime" class="form-label">Başlangıç Tarih ve Saat</label>
+                        <input type="datetime-local" id="StartDateTime" name="StartDateTime" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="EndDateTime" class="form-label">Bitiş Tarih ve Saat</label>
+                        <input type="datetime-local" id="EndDateTime" name="EndDateTime" class="form-control" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-success">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Mevcut Rezervasyonlar -->
+<h4 class="mb-3 mt-5">Mevcut Rezervasyonlarım</h4>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    @foreach (var reservation in Model.MyReservations)
+    {
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">@reservation.Class.Name</h5>
+                    <p class="card-text">
+                        <strong>Başlangıç:</strong> @reservation.StartDateTime.ToString("g")<br />
+                        <strong>Bitiş:</strong> @reservation.EndDateTime.ToString("g")<br />
+                        <strong>Durum:</strong>
+                        @if (reservation.Status == "Pending")
+                        {
+                            <span class="badge bg-warning text-dark">Bekliyor</span>
+                        }
+                        else if (reservation.Status == "Approved")
+                        {
+                            <span class="badge bg-success">Onaylandı</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Reddedildi</span>
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
