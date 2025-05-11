@@ -16,7 +16,9 @@ namespace CENG382_TERM_PROJECT.Models
 		public DbSet<Term> Terms { get; set; }
 		
 		public DbSet<Classroom> Classrooms { get; set; }
-		
-		public DbSet<Reservation> Reservations { get; set; }
+
+        public DbSet<TimeSlot> TimeSlots { get; set; }
+        public DbSet<RecurringReservation> RecurringReservations { get; set; }
+
     }
 }

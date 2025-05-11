@@ -54,18 +54,24 @@ builder.Services.AddAuthorization(options =>
 	builder.Services.AddScoped<IPasswordService, PasswordService>();
 	builder.Services.AddScoped<ITermService, TermService>();
 	builder.Services.AddScoped<IClassroomService, ClassroomService>();
-	builder.Services.AddScoped<IReservationService, ReservationService>();
-	builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-	options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Strict;
-});
+    builder.Services.AddScoped<IRecurringReservationService, RecurringReservationService>();
+    builder.Services.AddSession(options =>
+    {
+        options.IdleTimeout = TimeSpan.FromMinutes(30);
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
+	    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+    });
 
 var app = builder.Build();
 
+// timeslot seed iþlemi
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    CENG382_TERM_PROJECT.Data.Seed.TimeSlotSeeder.Seed(dbContext);
+}
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -82,7 +88,6 @@ app.Use(async (context, next) =>
     context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
     context.Response.Headers.Add("X-Frame-Options", "DENY");
     context.Response.Headers.Add("Referrer-Policy", "no-referrer");
-    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self';");
     await next();
 });
 

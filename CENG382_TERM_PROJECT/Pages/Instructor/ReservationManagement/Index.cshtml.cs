@@ -12,77 +12,75 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
     [Authorize(Roles = "Instructor")]
     public class IndexModel : PageModel
     {
-        private readonly IReservationService _reservationService;
-        private readonly IInstructorService _instructorService;
         private readonly AppDbContext _context;
+        private readonly IRecurringReservationService _reservationService;
 
-        public IndexModel(IReservationService reservationService, IInstructorService instructorService, AppDbContext context)
+        public IndexModel(AppDbContext context, IRecurringReservationService reservationService)
         {
-            _reservationService = reservationService;
-            _instructorService = instructorService;
             _context = context;
+            _reservationService = reservationService;
         }
 
         [BindProperty]
-        public int ClassId { get; set; }
+        public int SelectedClassroomId { get; set; }
 
         [BindProperty]
-        public DateTime StartDateTime { get; set; }
+        public int SelectedTermId { get; set; }
 
         [BindProperty]
-        public DateTime EndDateTime { get; set; }
+        public List<int> SelectedTimeSlotIds { get; set; } = new();
 
         public List<Classroom> AvailableClassrooms { get; set; }
-        public List<Reservation> MyReservations { get; set; }
+        public List<Term> AvailableTerms { get; set; }
+        public List<TimeSlot> AllTimeSlots { get; set; }
+        public List<RecurringReservation> MyReservations { get; set; }
 
         public async Task<IActionResult> OnGetAsync()
         {
-            int instructorId = GetCurrentInstructorId();
-            AvailableClassrooms = _context.Classrooms.ToList();
-            MyReservations = await _reservationService.GetReservationsByInstructorIdAsync(instructorId);
+            await LoadDataAsync();
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
+            if (SelectedClassroomId == 0 || SelectedTermId == 0 || SelectedTimeSlotIds.Count == 0)
             {
-                return await OnGetAsync();
-            }
-
-            if (StartDateTime < DateTime.Now)
-            {
-                ModelState.AddModelError(string.Empty, "Başlangıç zamanı geçmiş bir tarih olamaz.");
-                return await OnGetAsync();
-            }
-
-            if (StartDateTime >= EndDateTime)
-            {
-                ModelState.AddModelError(string.Empty, "Bitiş zamanı başlangıç zamanından sonra olmalıdır.");
-                return await OnGetAsync();
+                ModelState.AddModelError("", "Tüm alanları doldurun ve en az 1 saat seçin.");
+                await LoadDataAsync();
+                return Page();
             }
 
             int instructorId = GetCurrentInstructorId();
+            var success = await _reservationService.CreateRecurringReservationsAsync(
+                instructorId,
+                SelectedClassroomId,
+                SelectedTermId,
+                SelectedTimeSlotIds
+            );
 
-            var newReservation = new Reservation
+            if (!success)
             {
-                ClassId = ClassId,
-                InstructorId = instructorId,
-                StartDateTime = StartDateTime,
-                EndDateTime = EndDateTime,
-                Status = "Pending",
-                Reason = ""
-            };
+                ModelState.AddModelError("", "Seçilen zaman dilimlerinden bazıları çakışıyor.");
+            }
 
-            await _reservationService.AddReservationAsync(newReservation);
-            return RedirectToPage();
+            await LoadDataAsync();
+            return Page();
+        }
+
+        private async Task LoadDataAsync()
+        {
+            AvailableClassrooms = _context.Classrooms.ToList();
+            AvailableTerms = _context.Terms.ToList();
+            AllTimeSlots = await _reservationService.GetAllTimeSlotsAsync();
+
+            int instructorId = GetCurrentInstructorId();
+            MyReservations = await _reservationService.GetInstructorReservationsAsync(instructorId);
         }
 
         private int GetCurrentInstructorId()
         {
             var email = User.Identity?.Name;
-            var instructor = _context.Users.FirstOrDefault(u => u.Email == email && u.Role == "Instructor");
-            return instructor?.Id ?? 0;
+            return _context.Users.FirstOrDefault(u => u.Email == email)?.Id ?? 0;
         }
     }
 }
