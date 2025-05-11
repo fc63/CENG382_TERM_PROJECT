@@ -20,12 +20,11 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
             _context = context;
             _reservationService = reservationService;
         }
-
         [BindProperty]
         public int SelectedClassroomId { get; set; }
 
-        [BindProperty]
-        public int SelectedTermId { get; set; }
+        [BindProperty(SupportsGet = true)]
+        public int? SelectedTermId { get; set; }
 
         [BindProperty]
         public List<int> SelectedTimeSlotIds { get; set; } = new();
@@ -55,7 +54,7 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
             var success = await _reservationService.CreateRecurringReservationsAsync(
                 instructorId,
                 SelectedClassroomId,
-                SelectedTermId,
+                SelectedTermId.Value,
                 SelectedTimeSlotIds
             );
 
@@ -70,16 +69,35 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
 
         private async Task LoadDataAsync()
         {
-            AvailableClassrooms = _context.Classrooms.ToList();
+            // Tüm dönemleri çek
             AvailableTerms = _context.Terms.ToList();
+
+            // Eğer SelectedTermId boşsa veya geçersizse ilk dönemi al
+            var termIdToShow = SelectedTermId.HasValue && SelectedTermId > 0
+                ? SelectedTermId.Value
+                : AvailableTerms.FirstOrDefault()?.Id ?? 0;
+
+            // Sayfa üzerindeki SelectedTermId alanını da set et (görselde aktif gözüksün)
+            SelectedTermId = termIdToShow;
+
+            // Tüm sınıflar ve saat slotlarını çek
+            AvailableClassrooms = _context.Classrooms.ToList();
             AllTimeSlots = await _reservationService.GetAllTimeSlotsAsync();
 
+            // Instructor ID al
             int instructorId = GetCurrentInstructorId();
+
+            // Instructor'ın bu döneme ait rezervasyonlarını çek
             MyReservations = await _reservationService.GetInstructorReservationsAsync(instructorId);
+            MyReservations = MyReservations
+                .Where(r => r.TermId == termIdToShow)
+                .ToList();
+
+            // Haftalık takvimi hazırlamak için map oluştur
             WeeklyReservationMap = MyReservations
                 .GroupBy(r => (r.TimeSlot.DayOfWeek, r.TimeSlot.StartTime))
                 .ToDictionary(
-                    g => (g.Key.DayOfWeek, g.Key.StartTime),
+                    g => g.Key,
                     g => g.First()
                 );
         }

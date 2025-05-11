@@ -7,17 +7,22 @@
 
 <h2 class="mb-4">Dönemlik Haftalık Rezervasyon</h2>
 
-<!-- Aksiyon Butonları -->
-<div class="mb-4 d-flex gap-3">
-    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#weeklyReservationModal">
-        Yeni Rezervasyon Ekle
-    </button>
+<!-- 🔽 Dönem Seçme -->
+<form method="get" class="mb-4">
+    <div class="input-group w-50">
+        <label class="input-group-text">Dönem Seçin</label>
+        <select name="SelectedTermId" class="form-select" onchange="this.form.submit()">
+            @foreach (var term in Model.AvailableTerms)
+            {
+                <option value="@term.Id" selected="@(term.Id == Model.SelectedTermId)">
+                    @term.Name (@term.StartDate.ToShortDateString() - @term.EndDate.ToShortDateString())
+                </option>
+            }
+        </select>
+    </div>
+</form>
 
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#calendarModal">
-        Haftalık Rezervasyonlarım
-    </button>
-</div>
-
+<!-- ⚠️ Hata Mesajları -->
 @if (!ViewData.ModelState.IsValid)
 {
     <div class="alert alert-danger">
@@ -28,11 +33,23 @@
     </div>
 }
 
-<!-- Modal: Yeni Rezervasyon Ekle -->
+<!-- 🎛️ Aksiyon Butonları -->
+<div class="mb-4 d-flex gap-3">
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#weeklyReservationModal">
+        Yeni Rezervasyon Ekle
+    </button>
+
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#calendarModal">
+        Haftalık Rezervasyonlarım
+    </button>
+</div>
+
+<!-- 🗓️ Modal: Yeni Rezervasyon -->
 <div class="modal fade" id="weeklyReservationModal" tabindex="-1" aria-labelledby="weeklyReservationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <form method="post">
+                <input type="hidden" name="SelectedTermId" value="@Model.SelectedTermId" />
                 <div class="modal-header">
                     <h5 class="modal-title">Yeni Haftalık Rezervasyon</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
@@ -48,16 +65,7 @@
                             }
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Dönem Seç</label>
-                        <select name="SelectedTermId" class="form-select" required>
-                            <option value="">-- Dönem Seçin --</option>
-                            @foreach (var term in Model.AvailableTerms)
-                            {
-                                <option value="@term.Id">@term.Name (@term.StartDate.ToShortDateString() - @term.EndDate.ToShortDateString())</option>
-                            }
-                        </select>
-                    </div>
+
                     <div class="table-responsive">
                         <table class="table table-bordered text-center align-middle">
                             <thead class="table-light">
@@ -99,7 +107,7 @@
     </div>
 </div>
 
-<!-- Modal: Haftalık Rezervasyon Takvimi -->
+<!-- 📅 Modal: Haftalık Rezervasyon Takvimi -->
 <div class="modal fade" id="calendarModal" tabindex="-1" aria-labelledby="calendarModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -132,7 +140,11 @@
                                             var r = Model.WeeklyReservationMap[key];
                                             <td class="bg-light">
                                                 <div><strong>Classroom:</strong> @r.Classroom.Name</div>
-                                                <div><span class="badge @(r.Status == "Approved" ? "bg-success" : r.Status == "Pending" ? "bg-warning text-dark" : "bg-danger")">@r.Status</span></div>
+                                                <div>
+                                                    <span class="badge @(r.Status == "Approved" ? "bg-success" : r.Status == "Pending" ? "bg-warning text-dark" : "bg-danger")">
+                                                        @r.Status
+                                                    </span>
+                                                </div>
                                                 <form method="post" asp-page-handler="Cancel">
                                                     <input type="hidden" name="reservationId" value="@r.Id" />
                                                     <button type="submit" class="btn btn-sm btn-outline-danger mt-1">İptal</button>
