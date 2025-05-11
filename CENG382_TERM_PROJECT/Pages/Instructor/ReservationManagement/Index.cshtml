@@ -1,11 +1,22 @@
 @page
 @model CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement.IndexModel
 @{
-    ViewData["Title"] = "Haftalık Rezervasyon";
+    ViewData["Title"] = "Dönemlik Haftalık Rezervasyon";
     Layout = "_Layout";
 }
 
 <h2 class="mb-4">Dönemlik Haftalık Rezervasyon</h2>
+
+<!-- Aksiyon Butonları -->
+<div class="mb-4 d-flex gap-3">
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#weeklyReservationModal">
+        Yeni Rezervasyon Ekle
+    </button>
+
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#calendarModal">
+        Haftalık Rezervasyonlarım
+    </button>
+</div>
 
 @if (!ViewData.ModelState.IsValid)
 {
@@ -17,81 +28,124 @@
     </div>
 }
 
-<form method="post" class="mb-5">
-    <div class="mb-3">
-        <label class="form-label">Sınıf Seçin</label>
-        <select name="SelectedClassroomId" class="form-select" required>
-            <option value="">-- Sınıf Seçin --</option>
-            @foreach (var classroom in Model.AvailableClassrooms)
-            {
-                <option value="@classroom.Id">@classroom.Name - @classroom.Location</option>
-            }
-        </select>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Dönem Seçin</label>
-        <select name="SelectedTermId" class="form-select" required>
-            <option value="">-- Dönem Seçin --</option>
-            @foreach (var term in Model.AvailableTerms)
-            {
-                <option value="@term.Id">@term.Name (@term.StartDate.ToShortDateString() - @term.EndDate.ToShortDateString())</option>
-            }
-        </select>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Haftalık Saatleri Seçin</label>
-        <div class="table-responsive">
-            <table class="table table-bordered text-center align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Saat</th>
-                        @foreach (var day in new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" })
-                        {
-                            <th>@day</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var hour in Model.AllTimeSlots.Select(t => t.StartTime).Distinct())
-                    {
-                        <tr>
-                            <td>@hour.ToString("hh\\:mm")</td>
-                            @foreach (var day in new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" })
+<!-- Modal: Yeni Rezervasyon Ekle -->
+<div class="modal fade" id="weeklyReservationModal" tabindex="-1" aria-labelledby="weeklyReservationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <form method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Yeni Haftalık Rezervasyon</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Sınıf Seç</label>
+                        <select name="SelectedClassroomId" class="form-select" required>
+                            <option value="">-- Sınıf Seçin --</option>
+                            @foreach (var classroom in Model.AvailableClassrooms)
                             {
-                                var slot = Model.AllTimeSlots.FirstOrDefault(ts => ts.DayOfWeek == day && ts.StartTime == hour);
-                                <td>
-                                    @if (slot != null)
-                                    {
-                                        <input type="checkbox" name="SelectedTimeSlotIds" value="@slot.Id" />
-                                    }
-                                </td>
+                                <option value="@classroom.Id">@classroom.Name - @classroom.Location</option>
                             }
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Dönem Seç</label>
+                        <select name="SelectedTermId" class="form-select" required>
+                            <option value="">-- Dönem Seçin --</option>
+                            @foreach (var term in Model.AvailableTerms)
+                            {
+                                <option value="@term.Id">@term.Name (@term.StartDate.ToShortDateString() - @term.EndDate.ToShortDateString())</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Saat</th>
+                                    @foreach (var day in new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" })
+                                    {
+                                        <th>@day</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var hour in Model.AllTimeSlots.Select(t => t.StartTime).Distinct())
+                                {
+                                    <tr>
+                                        <td>@hour.ToString("hh\\:mm")</td>
+                                        @foreach (var day in new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" })
+                                        {
+                                            var slot = Model.AllTimeSlots.FirstOrDefault(ts => ts.DayOfWeek == day && ts.StartTime == hour);
+                                            <td>
+                                                @if (slot != null)
+                                                {
+                                                    <input type="checkbox" name="SelectedTimeSlotIds" value="@slot.Id" />
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-success">Rezervasyon Gönder</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <button type="submit" class="btn btn-primary">Rezervasyon Gönder</button>
-</form>
-
-<h4>Mevcut Rezervasyonlarım</h4>
-@if (Model.MyReservations.Any())
-{
-    <ul class="list-group">
-        @foreach (var r in Model.MyReservations)
-        {
-            <li class="list-group-item">
-                @r.Term.Name - @r.Classroom.Name, @r.TimeSlot.DayOfWeek @r.TimeSlot.StartTime.ToString("hh\\:mm")
-                <span class="badge @(r.Status == "Pending" ? "bg-warning text-dark" : r.Status == "Approved" ? "bg-success" : "bg-danger")">@r.Status</span>
-            </li>
-        }
-    </ul>
-}
-else
-{
-    <p>Henüz rezervasyon yapılmamış.</p>
-}
+<!-- Modal: Haftalık Rezervasyon Takvimi -->
+<div class="modal fade" id="calendarModal" tabindex="-1" aria-labelledby="calendarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Haftalık Rezervasyon Takvimi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Saat</th>
+                                @foreach (var day in new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" })
+                                {
+                                    <th>@day</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var hour in Model.AllTimeSlots.Select(t => t.StartTime).Distinct())
+                            {
+                                <tr>
+                                    <td>@hour.ToString("hh\\:mm")</td>
+                                    @foreach (var day in new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" })
+                                    {
+                                        var key = (day, hour);
+                                        if (Model.WeeklyReservationMap.ContainsKey(key))
+                                        {
+                                            var r = Model.WeeklyReservationMap[key];
+                                            <td class="bg-light">
+                                                <div><strong>Classroom:</strong> @r.Classroom.Name</div>
+                                                <div><span class="badge @(r.Status == "Approved" ? "bg-success" : r.Status == "Pending" ? "bg-warning text-dark" : "bg-danger")">@r.Status</span></div>
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            <td></td>
+                                        }
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

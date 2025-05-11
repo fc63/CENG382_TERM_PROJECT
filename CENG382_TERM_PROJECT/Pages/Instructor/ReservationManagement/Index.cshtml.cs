@@ -34,6 +34,7 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
         public List<Term> AvailableTerms { get; set; }
         public List<TimeSlot> AllTimeSlots { get; set; }
         public List<RecurringReservation> MyReservations { get; set; }
+        public Dictionary<(string day, TimeOnly time), RecurringReservation> WeeklyReservationMap { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -75,6 +76,12 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
 
             int instructorId = GetCurrentInstructorId();
             MyReservations = await _reservationService.GetInstructorReservationsAsync(instructorId);
+            WeeklyReservationMap = MyReservations
+                .GroupBy(r => (r.TimeSlot.DayOfWeek, r.TimeSlot.StartTime))
+                .ToDictionary(
+                    g => (g.Key.DayOfWeek, g.Key.StartTime),
+                    g => g.First()
+                );
         }
 
         private int GetCurrentInstructorId()
