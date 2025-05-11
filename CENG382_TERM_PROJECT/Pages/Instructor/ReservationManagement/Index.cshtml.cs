@@ -89,5 +89,12 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
             var email = User.Identity?.Name;
             return _context.Users.FirstOrDefault(u => u.Email == email)?.Id ?? 0;
         }
+        public async Task<IActionResult> OnPostCancelAsync(int reservationId)
+        {
+            int instructorId = GetCurrentInstructorId();
+            await _reservationService.CancelReservationAsync(reservationId, instructorId);
+            await LoadDataAsync();
+            return RedirectToPage();
+        }
     }
 }

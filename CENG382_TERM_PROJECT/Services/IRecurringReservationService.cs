@@ -9,5 +9,6 @@ namespace CENG382_TERM_PROJECT.Services
         Task<List<TimeSlot>> GetAllTimeSlotsAsync();
         Task<List<RecurringReservation>> GetInstructorReservationsAsync(int instructorId);
         Task<bool> CreateRecurringReservationsAsync(int instructorId, int classroomId, int termId, List<int> selectedSlotIds, string reason = "");
+        Task<bool> CancelReservationAsync(int reservationId, int instructorId);
     }
 }

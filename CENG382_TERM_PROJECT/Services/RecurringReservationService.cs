@@ -56,5 +56,18 @@ namespace CENG382_TERM_PROJECT.Services
             await _context.SaveChangesAsync();
             return true;
         }
+        public async Task<bool> CancelReservationAsync(int reservationId, int instructorId)
+        {
+            var reservation = await _context.RecurringReservations
+                .FirstOrDefaultAsync(r => r.Id == reservationId && r.InstructorId == instructorId);
+
+            if (reservation == null)
+                return false;
+
+            _context.RecurringReservations.Remove(reservation);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
     }
 }
