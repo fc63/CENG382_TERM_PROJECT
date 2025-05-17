@@ -1,0 +1,103 @@
+﻿@page
+@model CENG382_TERM_PROJECT.Pages.Admin.RecurringReservations.IndexModel
+@{
+    ViewData["Title"] = "Rezervasyon Onay Paneli";
+    Layout = "_Layout";
+}
+
+<h2 class="mb-4">Bekleyen Rezervasyonlar</h2>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@error.ErrorMessage</p>
+        }
+    </div>
+}
+
+@if (Model.PendingReservations.Count == 0)
+{
+    <div class="alert alert-info">Bekleyen rezervasyon bulunmamaktadır.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle text-center">
+            <thead class="table-light">
+                <tr>
+                    <th>Dönem</th>
+                    <th>Sınıf</th>
+                    <th>Gün</th>
+                    <th>Saat</th>
+                    <th>Eğitmen</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.PendingReservations)
+                {
+                    <tr>
+                        <td>@r.Term.Name</td>
+                        <td>@r.Classroom.Name</td>
+                        <td>@r.TimeSlot.DayOfWeek</td>
+                        <td>@r.TimeSlot.StartTime.ToString("hh\\:mm")</td>
+                        <td>@r.Instructor.FullName</td>
+                        <td class="d-flex justify-content-center gap-2">
+                            <form method="post" asp-page-handler="Approve">
+                                <input type="hidden" name="reservationId" value="@r.Id" />
+                                <button type="submit" class="btn btn-sm btn-success">Onayla</button>
+                            </form>
+                            <form method="post" asp-page-handler="Reject">
+                                <input type="hidden" name="reservationId" value="@r.Id" />
+                                <button type="submit" class="btn btn-sm btn-danger">Reddet</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+<h2 class="mb-4 mt-5">Onaylanmış Rezervasyonlar</h2>
+
+@if (Model.ApprovedReservations.Count == 0)
+{
+    <div class="alert alert-info">Henüz onaylanmış rezervasyon bulunmamaktadır.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle text-center">
+            <thead class="table-success">
+                <tr>
+                    <th>Dönem</th>
+                    <th>Sınıf</th>
+                    <th>Gün</th>
+                    <th>Saat</th>
+                    <th>Eğitmen</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.ApprovedReservations)
+                {
+                    <tr>
+                        <td>@r.Term.Name</td>
+                        <td>@r.Classroom.Name</td>
+                        <td>@r.TimeSlot.DayOfWeek</td>
+                        <td>@r.TimeSlot.StartTime.ToString("hh\\:mm")</td>
+                        <td>@r.Instructor.FullName</td>
+                        <td>
+                            <form method="post" asp-page-handler="Cancel">
+                                <input type="hidden" name="reservationId" value="@r.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">İptal Et</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

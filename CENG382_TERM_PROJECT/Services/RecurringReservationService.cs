@@ -68,6 +68,80 @@ namespace CENG382_TERM_PROJECT.Services
             await _context.SaveChangesAsync();
             return true;
         }
+        public async Task<List<RecurringReservation>> GetAllPendingReservationsAsync()
+        {
+            return await _context.RecurringReservations
+                .Include(r => r.Classroom)
+                .Include(r => r.Term)
+                .Include(r => r.TimeSlot)
+                .Include(r => r.Instructor)
+                .Where(r => r.Status == "Pending")
+                .OrderBy(r => r.Term.StartDate)
+                .ThenBy(r => r.TimeSlot.DayOfWeek)
+                .ThenBy(r => r.TimeSlot.StartTime)
+                .ToListAsync();
+        }
+        public async Task<bool> ApproveReservationAsync(int reservationId)
+        {
+            var reservation = await _context.RecurringReservations
+                .Include(r => r.Classroom)
+                .Include(r => r.TimeSlot)
+                .FirstOrDefaultAsync(r => r.Id == reservationId);
 
+            if (reservation == null || reservation.Status != "Pending")
+                return false;
+
+            bool conflictExists = await _context.RecurringReservations.AnyAsync(r =>
+                r.Id != reservation.Id &&
+                r.ClassroomId == reservation.ClassroomId &&
+                r.TermId == reservation.TermId &&
+                r.TimeSlotId == reservation.TimeSlotId &&
+                r.Status == "Approved"
+            );
+
+            if (conflictExists)
+                return false;
+
+            reservation.Status = "Approved";
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        public async Task<bool> RejectReservationAsync(int reservationId)
+        {
+            var reservation = await _context.RecurringReservations
+                .FirstOrDefaultAsync(r => r.Id == reservationId);
+
+            if (reservation == null || reservation.Status != "Pending")
+                return false;
+
+            reservation.Status = "Rejected";
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        public async Task<List<RecurringReservation>> GetAllApprovedReservationsAsync()
+        {
+            return await _context.RecurringReservations
+                .Include(r => r.Classroom)
+                .Include(r => r.Term)
+                .Include(r => r.TimeSlot)
+                .Include(r => r.Instructor)
+                .Where(r => r.Status == "Approved")
+                .OrderBy(r => r.Term.StartDate)
+                .ThenBy(r => r.TimeSlot.DayOfWeek)
+                .ThenBy(r => r.TimeSlot.StartTime)
+                .ToListAsync();
+        }
+        public async Task<bool> CancelApprovedReservationAsync(int reservationId)
+        {
+            var reservation = await _context.RecurringReservations.FirstOrDefaultAsync(r =>
+                r.Id == reservationId && r.Status == "Approved");
+
+            if (reservation == null)
+                return false;
+
+            reservation.Status = "Rejected";
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

@@ -90,7 +90,7 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
             // Instructor'ın bu döneme ait rezervasyonlarını çek
             MyReservations = await _reservationService.GetInstructorReservationsAsync(instructorId);
             MyReservations = MyReservations
-                .Where(r => r.TermId == termIdToShow)
+                .Where(r => r.TermId == termIdToShow && r.Status != "Rejected")
                 .ToList();
 
             // Haftalık takvimi hazırlamak için map oluştur

@@ -145,10 +145,13 @@
                                                         @r.Status
                                                     </span>
                                                 </div>
-                                                <form method="post" asp-page-handler="Cancel">
-                                                    <input type="hidden" name="reservationId" value="@r.Id" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger mt-1">İptal</button>
-                                                </form>
+                                                @if (r.Status == "Pending")
+                                                {
+                                                    <form method="post" asp-page-handler="Cancel">
+                                                        <input type="hidden" name="reservationId" value="@r.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger mt-1">İptal</button>
+                                                    </form>
+                                                }
                                             </td>
                                         }
                                         else
