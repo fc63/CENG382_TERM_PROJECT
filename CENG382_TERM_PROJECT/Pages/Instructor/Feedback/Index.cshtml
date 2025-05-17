@@ -1,0 +1,38 @@
+﻿@page
+@model CENG382_TERM_PROJECT.Pages.Instructor.Feedback.IndexModel
+@{
+    ViewData["Title"] = "Geri Bildirim Gönder";
+    Layout = "_Layout";
+}
+
+<h2 class="mb-4">Sınıf Geri Bildirimi</h2>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+
+<form method="post">
+    <div class="mb-3">
+        <label for="SelectedClassId" class="form-label">Sınıf Seç</label>
+        <select asp-for="SelectedClassId" class="form-select" required>
+            <option value="">-- Seçiniz --</option>
+            @foreach (var c in Model.Classrooms)
+            {
+                <option value="@c.Id">@c.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="Stars" class="form-label">Yıldız (1–5)</label>
+        <input asp-for="Stars" type="number" class="form-control" min="1" max="5" required />
+    </div>
+
+    <div class="mb-3">
+        <label for="Comment" class="form-label">Yorum</label>
+        <textarea asp-for="Comment" class="form-control" rows="4" required></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Gönder</button>
+</form>

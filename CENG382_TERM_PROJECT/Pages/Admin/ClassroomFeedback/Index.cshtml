@@ -1,0 +1,55 @@
+﻿@page
+@model CENG382_TERM_PROJECT.Pages.Admin.ClassroomFeedback.IndexModel
+@{
+    ViewData["Title"] = "Sınıf Geri Bildirimleri";
+    Layout = "_Layout";
+}
+
+<h2>Tüm Sınıflar için Geri Bildirimler</h2>
+
+@foreach (var classroom in Model.Classrooms)
+{
+    <div class="card my-4">
+        <div class="card-header d-flex justify-content-between">
+            <strong>@classroom.Name</strong>
+            @if (Model.AverageStarsByClassId[classroom.Id].HasValue)
+            {
+                <span>Ortalama: @Model.AverageStarsByClassId[classroom.Id]?.ToString("0.0") / 5</span>
+            }
+            else
+            {
+                <span>Henüz yorum yok</span>
+            }
+        </div>
+        <div class="card-body">
+            @if (Model.FeedbacksByClassId[classroom.Id].Any())
+            {
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Eğitmen</th>
+                            <th>Puan</th>
+                            <th>Yorum</th>
+                            <th>Tarih</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var f in Model.FeedbacksByClassId[classroom.Id])
+                        {
+                            <tr>
+                                <td>@f.Instructor.FullName</td>
+                                <td>@f.Stars</td>
+                                <td>@f.Comment</td>
+                                <td>@f.Date.ToString("dd.MM.yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p>Bu sınıf için yorum yok.</p>
+            }
+        </div>
+    </div>
+}

@@ -57,14 +57,15 @@ builder.Services.AddAuthorization(options =>
     builder.Services.AddHttpClient();
     builder.Services.AddScoped<IPublicHolidayService, PublicHolidayService>();
     builder.Services.AddHttpClient<PublicHolidayApiClient>();
+    builder.Services.AddScoped<IFeedbackService, FeedbackService>();
     builder.Services.AddSession(options =>
-            {
-                options.IdleTimeout = TimeSpan.FromMinutes(30);
-                options.Cookie.HttpOnly = true;
-                options.Cookie.IsEssential = true;
-	            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.Cookie.SameSite = SameSiteMode.Strict;
-            });
+                {
+                    options.IdleTimeout = TimeSpan.FromMinutes(30);
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.IsEssential = true;
+	                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                    options.Cookie.SameSite = SameSiteMode.Strict;
+                });
 
 var app = builder.Build();
 

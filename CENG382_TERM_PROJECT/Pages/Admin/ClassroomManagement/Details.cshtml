@@ -1,0 +1,38 @@
+﻿@page "{id:int}"
+@model CENG382_TERM_PROJECT.Pages.Admin.ClassroomManagement.DetailsModel
+
+<h2 class="mt-4">Geri Bildirimler</h2>
+
+@if (Model.AverageStars.HasValue)
+{
+    <p><strong>Ortalama Puan:</strong> @Model.AverageStars.Value.ToString("0.0") / 5</p>
+}
+else
+{
+    <p>Bu sınıf için henüz yorum yapılmamış.</p>
+}
+
+@if (Model.Feedbacks.Count > 0)
+{
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>Eğitmen</th>
+                <th>Yıldız</th>
+                <th>Yorum</th>
+                <th>Tarih</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var f in Model.Feedbacks)
+            {
+                <tr>
+                    <td>@f.Instructor.FullName</td>
+                    <td>@f.Stars</td>
+                    <td>@f.Comment</td>
+                    <td>@f.Date.ToString("dd.MM.yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
