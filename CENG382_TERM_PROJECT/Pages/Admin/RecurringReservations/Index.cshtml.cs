@@ -17,8 +17,8 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.RecurringReservations
         {
             _reservationService = reservationService;
         }
-        public List<RecurringReservation> ApprovedReservations { get; set; }
-        public List<RecurringReservation> PendingReservations { get; set; }
+        public List<RecurringReservation> ApprovedReservations { get; set; } = new();
+        public List<RecurringReservation> PendingReservations { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -52,6 +52,7 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.RecurringReservations
         {
             await _reservationService.RejectReservationAsync(reservationId);
             PendingReservations = await _reservationService.GetAllPendingReservationsAsync();
+            ApprovedReservations = await _reservationService.GetAllApprovedReservationsAsync();
             return Page();
         }
     }

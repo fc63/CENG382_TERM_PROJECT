@@ -46,8 +46,6 @@ builder.Services.AddAuthorization(options =>
 });
 	
 	builder.Services.AddHttpContextAccessor();
-	
-	builder.Services.AddMemoryCache();
 	builder.Services.AddScoped<ISessionService, SessionService>();
 	builder.Services.AddScoped<IInstructorService, InstructorService>();
 	builder.Services.AddScoped<IPaginationService, PaginationService>();
@@ -55,7 +53,10 @@ builder.Services.AddAuthorization(options =>
 	builder.Services.AddScoped<ITermService, TermService>();
 	builder.Services.AddScoped<IClassroomService, ClassroomService>();
     builder.Services.AddScoped<IRecurringReservationService, RecurringReservationService>();
-    builder.Services.AddSession(options =>
+    builder.Services.AddMemoryCache();
+    builder.Services.AddHttpClient();
+    builder.Services.AddScoped<IPublicHolidayService, PublicHolidayService>();
+builder.Services.AddSession(options =>
     {
         options.IdleTimeout = TimeSpan.FromMinutes(30);
         options.Cookie.HttpOnly = true;
@@ -95,7 +96,6 @@ app.Use(async (context, next) =>
 app.UseSession();
 
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
 

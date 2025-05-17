@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using CENG382_TERM_PROJECT.Models;
+using CENG382_TERM_PROJECT.Validation;
 
 namespace CENG382_TERM_PROJECT.Services
 {
@@ -34,7 +35,8 @@ namespace CENG382_TERM_PROJECT.Services
                 var exists = await _context.RecurringReservations.AnyAsync(r =>
                     r.ClassroomId == classroomId &&
                     r.TermId == termId &&
-                    r.TimeSlotId == slotId);
+                    r.TimeSlotId == slotId &&
+                    r.Status == "Approved");
 
                 if (exists)
                     return false;
@@ -91,18 +93,36 @@ namespace CENG382_TERM_PROJECT.Services
             if (reservation == null || reservation.Status != "Pending")
                 return false;
 
-            bool conflictExists = await _context.RecurringReservations.AnyAsync(r =>
-                r.Id != reservation.Id &&
-                r.ClassroomId == reservation.ClassroomId &&
-                r.TermId == reservation.TermId &&
-                r.TimeSlotId == reservation.TimeSlotId &&
-                r.Status == "Approved"
-            );
+            var validator = new ReservationValidator(new IConflictRule[]
+            {
+            new ReservationOverlapRule(_context)
+                    });
 
-            if (conflictExists)
-                return false;
+                    var (isValid, message) = await validator.ValidateAsync(reservation);
 
-            reservation.Status = "Approved";
+                    if (!isValid)
+                    {
+                        reservation.Status = "Rejected";
+                        reservation.Reason = message;
+                    }
+                    else
+                    {
+                reservation.Status = "Approved";
+                var otherPendings = await _context.RecurringReservations
+                    .Where(r =>
+                        r.Id != reservation.Id &&
+                        r.ClassroomId == reservation.ClassroomId &&
+                        r.TermId == reservation.TermId &&
+                        r.TimeSlotId == reservation.TimeSlotId &&
+                        r.Status == "Pending")
+                    .ToListAsync();
+                foreach (var pending in otherPendings)
+                {
+                    pending.Status = "Cancelled";
+                    pending.Reason = "Başka bir rezervasyon onaylandığı için iptal edildi.";
+                }
+                reservation.Reason = null;
+                    }
             await _context.SaveChangesAsync();
             return true;
         }

@@ -62,9 +62,9 @@ else
 }
 <h2 class="mb-4 mt-5">Onaylanmış Rezervasyonlar</h2>
 
-@if (Model.ApprovedReservations.Count == 0)
+@if (Model.ApprovedReservations != null && Model.ApprovedReservations.Count == 0)
 {
-    <div class="alert alert-info">Henüz onaylanmış rezervasyon bulunmamaktadır.</div>
+    <div class="alert alert-info">Henüz onaylanmış rezervasyon yok.</div>
 }
 else
 {
