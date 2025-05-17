@@ -1,0 +1,49 @@
+﻿@page
+@model CENG382_TERM_PROJECT.Pages.Admin.TermHolidays.IndexModel
+@{
+    ViewData["Title"] = "Dönem Tatil Günleri";
+    Layout = "_Layout";
+}
+
+<h2 class="mb-4">Tatil Günleri</h2>
+
+<form method="get" class="mb-4">
+    <div class="input-group w-50">
+        <label class="input-group-text">Dönem Seç</label>
+        <select name="SelectedTermId" class="form-select" onchange="this.form.submit()">
+            @foreach (var term in Model.Terms)
+            {
+                <option value="@term.Id" selected="@(term.Id == Model.SelectedTermId)">
+                    @term.Name (@term.StartDate.ToShortDateString() - @term.EndDate.ToShortDateString())
+                </option>
+            }
+        </select>
+    </div>
+</form>
+
+@if (Model.Holidays.Count == 0)
+{
+    <div class="alert alert-info">Seçilen dönem için tanımlı tatil günü bulunmamaktadır.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle text-center">
+            <thead class="table-light">
+                <tr>
+                    <th>Tarih</th>
+                    <th>Açıklama</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var h in Model.Holidays)
+                {
+                    <tr>
+                        <td>@h.Date.ToString("dd.MM.yyyy")</td>
+                        <td>@h.Description</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

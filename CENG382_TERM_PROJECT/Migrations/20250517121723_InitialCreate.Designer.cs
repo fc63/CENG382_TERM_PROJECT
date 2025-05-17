@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CENG382_TERM_PROJECT.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250428162911_AddReservationTable")]
-    partial class AddReservationTable
+    [Migration("20250517121723_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.4")
+                .HasAnnotation("ProductVersion", "9.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -83,7 +83,7 @@ namespace CENG382_TERM_PROJECT.Migrations
                     b.ToTable("FailedLoginAttempts");
                 });
 
-            modelBuilder.Entity("CENG382_TERM_PROJECT.Models.Reservation", b =>
+            modelBuilder.Entity("CENG382_TERM_PROJECT.Models.PublicHoliday", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -91,33 +91,62 @@ namespace CENG382_TERM_PROJECT.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ClassId")
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("TermId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("EndDateTime")
-                        .HasColumnType("datetime2");
+                    b.HasKey("Id");
+
+                    b.HasIndex("TermId");
+
+                    b.ToTable("PublicHolidays");
+                });
+
+            modelBuilder.Entity("CENG382_TERM_PROJECT.Models.RecurringReservation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClassroomId")
+                        .HasColumnType("int");
 
                     b.Property<int>("InstructorId")
                         .HasColumnType("int");
 
                     b.Property<string>("Reason")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("StartDateTime")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("TermId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TimeSlotId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ClassId");
+                    b.HasIndex("ClassroomId");
 
                     b.HasIndex("InstructorId");
 
-                    b.ToTable("Reservations");
+                    b.HasIndex("TermId");
+
+                    b.HasIndex("TimeSlotId");
+
+                    b.ToTable("RecurringReservations");
                 });
 
             modelBuilder.Entity("CENG382_TERM_PROJECT.Models.Term", b =>
@@ -141,6 +170,29 @@ namespace CENG382_TERM_PROJECT.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Terms");
+                });
+
+            modelBuilder.Entity("CENG382_TERM_PROJECT.Models.TimeSlot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DayOfWeek")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TimeSlots");
                 });
 
             modelBuilder.Entity("CENG382_TERM_PROJECT.Models.User", b =>
@@ -172,11 +224,22 @@ namespace CENG382_TERM_PROJECT.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("CENG382_TERM_PROJECT.Models.Reservation", b =>
+            modelBuilder.Entity("CENG382_TERM_PROJECT.Models.PublicHoliday", b =>
                 {
-                    b.HasOne("CENG382_TERM_PROJECT.Models.Classroom", "Class")
+                    b.HasOne("CENG382_TERM_PROJECT.Models.Term", "Term")
                         .WithMany()
-                        .HasForeignKey("ClassId")
+                        .HasForeignKey("TermId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Term");
+                });
+
+            modelBuilder.Entity("CENG382_TERM_PROJECT.Models.RecurringReservation", b =>
+                {
+                    b.HasOne("CENG382_TERM_PROJECT.Models.Classroom", "Classroom")
+                        .WithMany()
+                        .HasForeignKey("ClassroomId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -186,9 +249,25 @@ namespace CENG382_TERM_PROJECT.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Class");
+                    b.HasOne("CENG382_TERM_PROJECT.Models.Term", "Term")
+                        .WithMany()
+                        .HasForeignKey("TermId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CENG382_TERM_PROJECT.Models.TimeSlot", "TimeSlot")
+                        .WithMany()
+                        .HasForeignKey("TimeSlotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Classroom");
 
                     b.Navigation("Instructor");
+
+                    b.Navigation("Term");
+
+                    b.Navigation("TimeSlot");
                 });
 #pragma warning restore 612, 618
         }

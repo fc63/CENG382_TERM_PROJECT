@@ -32,8 +32,10 @@
                 <label asp-for="EditingTerm.EndDate" class="form-label">Bitiş Tarihi</label>
                 <input asp-for="EditingTerm.EndDate" class="form-control" type="date" />
             </div>
-            <button type="submit" class="btn btn-success">@(Model.EditingTerm != null ? "Güncelle" : "Ekle")</button>
-            @if (Model.EditingTerm != null)
+            <button type="submit" class="btn btn-success">
+                @(Model.EditingTerm != null && Model.EditingTerm.Id > 0 ? "Güncelle" : "Ekle")
+            </button>
+            @if (Model.EditingTerm != null && Model.EditingTerm.Id > 0)
             {
                 <a asp-page="./Index" class="btn btn-secondary">İptal</a>
             }

@@ -1,18 +1,13 @@
-﻿using System;
+﻿using CENG382_TERM_PROJECT.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace CENG382_TERM_PROJECT.Services
 {
-    public class HolidayInfo
-    {
-        public DateTime Date { get; set; }
-        public string LocalName { get; set; }
-        public string Name { get; set; }
-    }
-
     public interface IPublicHolidayService
     {
-        Task<List<HolidayInfo>> GetHolidaysAsync(int year);
+        Task<List<PublicHoliday>> GetHolidaysByTermAsync(int termId);
+        Task<List<PublicHoliday>> GetAllAsync();
+        Task<List<PublicHoliday>> GetOrFetchHolidaysByTermAsync(int termId, DateTime start, DateTime end);
     }
 }

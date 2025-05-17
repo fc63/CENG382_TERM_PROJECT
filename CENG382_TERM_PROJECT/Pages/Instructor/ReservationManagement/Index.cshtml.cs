@@ -6,6 +6,7 @@ using CENG382_TERM_PROJECT.Services;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
 {
@@ -14,11 +15,13 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
     {
         private readonly AppDbContext _context;
         private readonly IRecurringReservationService _reservationService;
+        private readonly IPublicHolidayService _holidayService;
 
-        public IndexModel(AppDbContext context, IRecurringReservationService reservationService)
+        public IndexModel(AppDbContext context, IRecurringReservationService reservationService, IPublicHolidayService holidayService)
         {
             _context = context;
             _reservationService = reservationService;
+            _holidayService = holidayService;
         }
         [BindProperty]
         public int SelectedClassroomId { get; set; }
@@ -30,6 +33,7 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
         public List<int> SelectedTimeSlotIds { get; set; } = new();
 
         public List<Classroom> AvailableClassrooms { get; set; }
+        public List<PublicHoliday> Holidays { get; set; } = new();
         public List<Term> AvailableTerms { get; set; }
         public List<TimeSlot> AllTimeSlots { get; set; }
         public List<RecurringReservation> MyReservations { get; set; }
@@ -100,6 +104,11 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
                     g => g.Key,
                     g => g.First()
                 );
+            var term = await _context.Terms.FirstOrDefaultAsync(t => t.Id == SelectedTermId);
+            if (term != null)
+            {
+                Holidays = await _holidayService.GetOrFetchHolidaysByTermAsync(term.Id, term.StartDate, term.EndDate);
+            }
         }
 
         private int GetCurrentInstructorId()

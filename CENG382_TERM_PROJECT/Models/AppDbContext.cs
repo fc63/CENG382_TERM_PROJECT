@@ -19,6 +19,6 @@ namespace CENG382_TERM_PROJECT.Models
 
         public DbSet<TimeSlot> TimeSlots { get; set; }
         public DbSet<RecurringReservation> RecurringReservations { get; set; }
-
+        public DbSet<PublicHoliday> PublicHolidays { get; set; }
     }
 }
