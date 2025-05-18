@@ -8,21 +8,25 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.DataProtection;
 using CENG382_TERM_PROJECT.Utils;
 using Microsoft.Extensions.Caching.Memory;
+using CENG382_TERM_PROJECT.Services;
 
 namespace CENG382_TERM_PROJECT.Pages.Auth
 {
     public class LoginModel : PageModel
     {
         private readonly AppDbContext _context;
-		private readonly IDataProtector _protector;
+        private readonly IDataProtector _protector;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
-        public LoginModel(AppDbContext context, IDataProtectionProvider provider, IConfiguration configuration, IMemoryCache cache)
+        private readonly ISystemLogService _systemLogService;
+
+        public LoginModel(AppDbContext context, IDataProtectionProvider provider, IConfiguration configuration, IMemoryCache cache, ISystemLogService systemLogService)
         {
             _context = context;
             _protector = provider.CreateProtector("CENG382_TERM_PROJECT_CookieProtector");
             _configuration = configuration;
             _cache = cache;
+            _systemLogService = systemLogService;
         }
 
         [BindProperty]
@@ -56,16 +60,16 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
                 ErrorMessage = "Email ve şifre gereklidir.";
                 return Page();
             }
-			
-			var ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
-			var failedAttempt = await _context.FailedLoginAttempts
-				.FirstOrDefaultAsync(f => f.IPAddress == ipAddress && f.Email == Email);
 
-			if (failedAttempt != null && failedAttempt.BannedUntil != null && failedAttempt.BannedUntil > DateTime.UtcNow)
-			{
-				ErrorMessage = $"Çok fazla hatalı giriş denemesi. {failedAttempt.BannedUntil.Value.ToLocalTime()} saatinden sonra tekrar deneyin.";
-				return Page();
-			}
+            var ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
+            var failedAttempt = await _context.FailedLoginAttempts
+                .FirstOrDefaultAsync(f => f.IPAddress == ipAddress && f.Email == Email);
+
+            if (failedAttempt != null && failedAttempt.BannedUntil != null && failedAttempt.BannedUntil > DateTime.UtcNow)
+            {
+                ErrorMessage = $"Çok fazla hatalı giriş denemesi. {failedAttempt.BannedUntil.Value.ToLocalTime()} saatinden sonra tekrar deneyin.";
+                return Page();
+            }
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == Email);
             var pepper = _configuration["Security:Pepper"];
@@ -77,7 +81,7 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
                 var role = "Instructor";
 
                 failedAttempt = await _context.FailedLoginAttempts
-					.FirstOrDefaultAsync(f => f.IPAddress == ipAddress && f.Email == Email);
+                    .FirstOrDefaultAsync(f => f.IPAddress == ipAddress && f.Email == Email);
 
                 if (failedAttempt == null)
                 {
@@ -106,41 +110,43 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
 
                 await _context.SaveChangesAsync();
 
+                await _systemLogService.LogAsync(null, "LoginFailed",
+                    $"Failed login attempt for email: {Email}, IP: {ipAddress}.", false);
+
                 ErrorMessage = "Geçersiz email veya şifre.";
                 await Task.Delay(Random.Shared.Next(500, 1500));
                 return Page();
             }
 
-
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Email),
-                new Claim(ClaimTypes.Role, user.Role),
-                new Claim("UserId", user.Id.ToString())
-            };
+                {
+                    new Claim(ClaimTypes.Name, user.Email),
+                    new Claim(ClaimTypes.Role, user.Role),
+                    new Claim("UserId", user.Id.ToString())
+                };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
-			
-			await HttpContext.SignOutAsync();
-			HttpContext.Session.Clear();
+
+            await HttpContext.SignOutAsync();
+            HttpContext.Session.Clear();
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-			
-			var cookieOptions = new CookieOptions
-			{
-				Expires = DateTime.UtcNow.AddMinutes(30),
-				HttpOnly = true,
-				Secure = true,
-				SameSite = SameSiteMode.Lax
-			};
 
-			var token = SecurityHelper.GenerateSecureToken(user.Email);
-			var sessionId = Guid.NewGuid().ToString();
+            var cookieOptions = new CookieOptions
+            {
+                Expires = DateTime.UtcNow.AddMinutes(30),
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Lax
+            };
 
-			HttpContext.Session.SetString("username", user.Email);
-			HttpContext.Session.SetString("token", token);
-			HttpContext.Session.SetString("session_id", sessionId);
+            var token = SecurityHelper.GenerateSecureToken(user.Email);
+            var sessionId = Guid.NewGuid().ToString();
+
+            HttpContext.Session.SetString("username", user.Email);
+            HttpContext.Session.SetString("token", token);
+            HttpContext.Session.SetString("session_id", sessionId);
             HttpContext.Session.SetString("role", user.Role);
             _cache.Set(user.Email + "_token", token, TimeSpan.FromMinutes(30));
 
@@ -148,17 +154,20 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
             Response.Cookies.Append("token", _protector.Protect(token), cookieOptions);
             Response.Cookies.Append("session_id", _protector.Protect(sessionId), cookieOptions);
 
+            await _systemLogService.LogAsync(user.Id, "LoginSuccess",
+                $"Successful login for email: {user.Email}, IP: {ipAddress}.", true);
+
             if (user.Role == "Instructor")
             {
                 await Task.Delay(Random.Shared.Next(500, 1500));
                 return RedirectToPage("/Instructor/Index");
             }
             else if (user.Role == "Admin")
-                {
+            {
                 await Task.Delay(Random.Shared.Next(500, 1500));
-                return RedirectToPage("/Admin/Index"); 
+                return RedirectToPage("/Admin/Index");
             }
-			return RedirectToPage("/Index");
+            return RedirectToPage("/Index");
         }
     }
 }

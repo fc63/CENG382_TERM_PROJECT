@@ -14,9 +14,9 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.UserManagement
 
         [BindProperty(SupportsGet = true)]
         public bool ShowForm { get; set; }
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGet()
         {
-            var validationResult = _sessionService.ValidateSessionAndCookies(HttpContext, this);
+            var validationResult = await _sessionService.ValidateSessionAndCookies(HttpContext, this);
             if (validationResult != null)
                 return validationResult;
 
@@ -61,7 +61,7 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.UserManagement
         }
         public async Task<IActionResult> OnPostAsync()
         {
-            var validationResult = _sessionService.ValidateSessionAndCookies(HttpContext, this);
+            var validationResult = await _sessionService.ValidateSessionAndCookies(HttpContext, this);
             if (validationResult != null)
                 return validationResult;
 
@@ -107,7 +107,7 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.UserManagement
         }
         public async Task<IActionResult> OnPostDeleteAsync(int id, int pageNumber, string searchTerm)
         {
-            var validationResult = _sessionService.ValidateSessionAndCookies(HttpContext, this);
+            var validationResult = await _sessionService.ValidateSessionAndCookies(HttpContext, this);
             if (validationResult != null)
                 return validationResult;
 

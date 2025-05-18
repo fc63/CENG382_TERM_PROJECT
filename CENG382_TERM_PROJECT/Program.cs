@@ -60,16 +60,17 @@ builder.Services.AddAuthorization(options =>
     builder.Services.AddScoped<IPublicHolidayService, PublicHolidayService>();
     builder.Services.AddHttpClient<PublicHolidayApiClient>();
     builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+    builder.Services.AddScoped<ISystemLogService, SystemLogService>();
     builder.Services.AddSession(options =>
-                {
-                    options.IdleTimeout = TimeSpan.FromMinutes(30);
-                    options.Cookie.HttpOnly = true;
-                    options.Cookie.IsEssential = true;
-	                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                    options.Cookie.SameSite = SameSiteMode.Strict;
-                });
+                    {
+                        options.IdleTimeout = TimeSpan.FromMinutes(30);
+                        options.Cookie.HttpOnly = true;
+                        options.Cookie.IsEssential = true;
+	                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                        options.Cookie.SameSite = SameSiteMode.Strict;
+                    });
 
-var app = builder.Build();
+    var app = builder.Build();
 
 // timeslot seed iþlemi
 using (var scope = app.Services.CreateScope())

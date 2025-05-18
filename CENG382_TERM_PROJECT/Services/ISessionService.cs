@@ -6,7 +6,7 @@ namespace CENG382_TERM_PROJECT.Services
 {
     public interface ISessionService
     {
-        IActionResult ValidateSessionAndCookies(HttpContext httpContext, PageModel page);
+        Task<IActionResult> ValidateSessionAndCookies(HttpContext httpContext, PageModel page);
         void ClearSessionAndCookies(HttpContext httpContext);
     }
 }

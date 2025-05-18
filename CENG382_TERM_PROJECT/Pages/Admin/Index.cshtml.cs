@@ -18,9 +18,9 @@ namespace CENG382_TERM_PROJECT.Pages.Admin
             _sessionService = sessionService;
         }
 
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGet()
         {
-            var validationResult = _sessionService.ValidateSessionAndCookies(HttpContext, this);
+            var validationResult = await _sessionService.ValidateSessionAndCookies(HttpContext, this);
             if (validationResult != null)
                 return validationResult;
 

@@ -4,16 +4,19 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using CENG382_TERM_PROJECT.Services; // Add the necessary using directive
 
 namespace CENG382_TERM_PROJECT.Validation
 {
     public class ReservationOverlapRule : IConflictRule
     {
         private readonly AppDbContext _context;
+        private readonly ISystemLogService _systemLogService;
 
-        public ReservationOverlapRule(AppDbContext context)
+        public ReservationOverlapRule(AppDbContext context, ISystemLogService systemLogService)
         {
             _context = context;
+            _systemLogService = systemLogService;
         }
 
         public async Task<(bool HasConflict, string Message)> CheckConflictAsync(RecurringReservation reservation)
@@ -21,7 +24,7 @@ namespace CENG382_TERM_PROJECT.Validation
             var reservationSlot = reservation.TimeSlot;
             if (reservationSlot == null) return (false, null);
 
-            // aynı sınıfta çakışma kontrolü
+            // Classroom conflict check
             var classroomConflict = await _context.RecurringReservations
                 .Where(r =>
                     r.Id != reservation.Id &&
@@ -34,9 +37,14 @@ namespace CENG382_TERM_PROJECT.Validation
                 ).AnyAsync();
 
             if (classroomConflict)
-                return (true, "Bu sınıfta bu gün ve saatte zaten onaylı bir rezervasyon var.");
+            {
+                var message = "Bu sınıfta bu gün ve saatte zaten onaylı bir rezervasyon var.";
+                await _systemLogService.LogAsync(reservation.InstructorId, "ReservationConflict",
+                    $"Conflict detected in ReservationOverlapRule. ReservationId: {reservation.Id}, Message: {message}", false);
+                return (true, message);
+            }
 
-            // instructor çakışma kontrolü
+            // Instructor conflict check
             var instructorConflict = await _context.RecurringReservations
                 .Where(r =>
                     r.Id != reservation.Id &&
@@ -49,7 +57,12 @@ namespace CENG382_TERM_PROJECT.Validation
                 ).AnyAsync();
 
             if (instructorConflict)
-                return (true, "Bu eğitmenin bu saatte başka bir sınıfta onaylı dersi var.");
+            {
+                var message = "Bu eğitmenin bu saatte başka bir sınıfta onaylı dersi var.";
+                await _systemLogService.LogAsync(reservation.InstructorId, "ReservationConflict",
+                    $"Conflict detected in ReservationOverlapRule. ReservationId: {reservation.Id}, Message: {message}", false);
+                return (true, message);
+            }
 
             return (false, null);
         }

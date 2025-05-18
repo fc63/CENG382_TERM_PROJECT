@@ -21,5 +21,6 @@ namespace CENG382_TERM_PROJECT.Models
         public DbSet<RecurringReservation> RecurringReservations { get; set; }
         public DbSet<PublicHoliday> PublicHolidays { get; set; }
         public DbSet<Feedback> Feedbacks { get; set; }
+        public DbSet<SystemLog> SystemLogs { get; set; }
     }
 }
