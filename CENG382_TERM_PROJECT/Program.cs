@@ -55,6 +55,8 @@ builder.Services.AddAuthorization(options =>
     builder.Services.AddScoped<IRecurringReservationService, RecurringReservationService>();
     builder.Services.AddMemoryCache();
     builder.Services.AddHttpClient();
+    builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+    builder.Services.AddScoped<IEmailService, EmailService>();
     builder.Services.AddScoped<IPublicHolidayService, PublicHolidayService>();
     builder.Services.AddHttpClient<PublicHolidayApiClient>();
     builder.Services.AddScoped<IFeedbackService, FeedbackService>();

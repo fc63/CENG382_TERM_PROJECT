@@ -86,7 +86,9 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.ReservationManagement
 
             // Tüm sınıflar ve saat slotlarını çek
             AvailableClassrooms = _context.Classrooms.ToList();
-            AllTimeSlots = await _reservationService.GetAllTimeSlotsAsync();
+            AllTimeSlots = (await _reservationService.GetAllTimeSlotsAsync())
+                .Where(slot => slot.StartTime >= new TimeOnly(9, 0) && slot.EndTime <= new TimeOnly(17, 0))
+                .ToList();
 
             // Instructor ID al
             int instructorId = GetCurrentInstructorId();
