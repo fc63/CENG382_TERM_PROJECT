@@ -1,4 +1,4 @@
-using CENG382_TERM_PROJECT.Models;
+﻿using CENG382_TERM_PROJECT.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CENG382_TERM_PROJECT.Services
@@ -78,7 +78,6 @@ namespace CENG382_TERM_PROJECT.Services
                 throw;
             }
         }
-
         public async Task<bool> DeleteInstructorAsync(int id)
         {
             try
@@ -91,17 +90,17 @@ namespace CENG382_TERM_PROJECT.Services
                     return false;
                 }
 
-                _context.Users.Remove(instructor);
+                instructor.IsActive = false; // ❗ artık gerçek silme yok, sadece pasif hale getiriyoruz
                 await _context.SaveChangesAsync();
 
                 await _systemLogService.LogAsync(id, "DeleteInstructor",
-                    $"Instructor deleted successfully. InstructorId: {id}, FullName: {instructor.FullName}, Email: {instructor.Email}", true);
+                    $"Instructor deactivated successfully. InstructorId: {id}, FullName: {instructor.FullName}, Email: {instructor.Email}", true);
                 return true;
             }
             catch (Exception ex)
             {
                 await _systemLogService.LogAsync(id, "DeleteInstructor",
-                    $"Error occurred while deleting instructor. InstructorId: {id}. Error: {ex.Message}", false);
+                    $"Error occurred while deactivating instructor. InstructorId: {id}. Error: {ex.Message}", false);
                 throw;
             }
         }

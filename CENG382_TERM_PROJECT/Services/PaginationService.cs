@@ -1,4 +1,5 @@
 using CENG382_TERM_PROJECT.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace CENG382_TERM_PROJECT.Services
 {
@@ -13,7 +14,10 @@ namespace CENG382_TERM_PROJECT.Services
 
         public (List<User> Instructors, int TotalPages) GetPaginatedInstructors(string searchTerm, int pageNumber, int pageSize = 10)
         {
-            var instructorsQuery = _context.Users.Where(u => u.Role == "Instructor").AsEnumerable();
+            var instructorsQuery = _context.Users
+                .Where(u => u.Role == "Instructor" && u.IsActive)
+                .AsNoTracking()
+                .AsEnumerable();
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
