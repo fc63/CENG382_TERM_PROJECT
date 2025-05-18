@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CENG382_TERM_PROJECT.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/theme.css" />
 	@RenderSection("Styles", required: false)
 </head>
 <body>
@@ -50,6 +51,9 @@
                             Giriş yapılmamış
                         </span>
                     }
+                    <div class="d-flex align-items-center ms-2">
+                        <button id="themeToggle" class="btn btn-outline-secondary btn-sm" type="button" title="Tema Değiştir">🌓</button>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -69,6 +73,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/themeToggle.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
