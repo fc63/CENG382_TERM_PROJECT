@@ -13,6 +13,7 @@ namespace CENG382_TERM_PROJECT.Services
         Task<List<RecurringReservation>> GetAllPendingReservationsAsync();
         Task<bool> ApproveReservationAsync(int reservationId);
         Task<bool> RejectReservationAsync(int reservationId);
+        Task<bool> RejectReservationAsync(int reservationId, string reason);
         Task<List<RecurringReservation>> GetAllApprovedReservationsAsync();
         Task<bool> CancelApprovedReservationAsync(int reservationId);
         Task<RecurringReservation> GetReservationByIdAsync(int reservationId);

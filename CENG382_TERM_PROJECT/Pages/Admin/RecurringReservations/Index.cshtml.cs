@@ -72,10 +72,9 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.RecurringReservations
             ApprovedReservations = await _reservationService.GetAllApprovedReservationsAsync();
             return Page();
         }
-
-        public async Task<IActionResult> OnPostRejectAsync(int reservationId)
+        public async Task<IActionResult> OnPostRejectAsync(int reservationId, string reason = null)
         {
-            await _reservationService.RejectReservationAsync(reservationId);
+            await _reservationService.RejectReservationAsync(reservationId, reason);
 
             var reservation = await _reservationService.GetReservationByIdAsync(reservationId);
             var toEmail = reservation.Instructor.Email;
@@ -83,7 +82,8 @@ namespace CENG382_TERM_PROJECT.Pages.Admin.RecurringReservations
             var body = $"Sayýn {reservation.Instructor.FullName},\n\n" +
                        $"{reservation.Term.Name} döneminde {reservation.Classroom.Name} sýnýfý için " +
                        $"{reservation.TimeSlot.DayOfWeek} günü saat {reservation.TimeSlot.StartTime:hh\\:mm} için " +
-                       "yapmýþ olduðunuz rezervasyon **reddedilmiþtir**.";
+                       "yapmýþ olduðunuz rezervasyon **reddedilmiþtir**.\n\n" +
+                       $"Gerekçe: {reservation.Reason}";
 
             await _emailService.SendEmailAsync(toEmail, subject, body);
 

@@ -171,7 +171,7 @@ namespace CENG382_TERM_PROJECT.Services
             return true;
         }
 
-        public async Task<bool> RejectReservationAsync(int reservationId)
+        public async Task<bool> RejectReservationAsync(int reservationId, string reason)
         {
             var reservation = await _context.RecurringReservations
                 .FirstOrDefaultAsync(r => r.Id == reservationId);
@@ -184,10 +184,16 @@ namespace CENG382_TERM_PROJECT.Services
             }
 
             reservation.Status = "Rejected";
+            reservation.Reason = string.IsNullOrWhiteSpace(reason) ? "Not specified" : reason;
             await _context.SaveChangesAsync();
             await _systemLogService.LogAsync(null, "RejectReservation",
-                $"ReservationId {reservationId} was manually rejected by admin.", true);
+                $"ReservationId {reservationId} was manually rejected by admin. Reason: {reservation.Reason}", true);
             return true;
+        }
+
+        public async Task<bool> RejectReservationAsync(int reservationId)
+        {
+            return await RejectReservationAsync(reservationId, "Not specified");
         }
 
         public async Task<List<RecurringReservation>> GetAllApprovedReservationsAsync()
