@@ -44,17 +44,19 @@ else
                         <td>@r.TimeSlot.DayOfWeek</td>
                         <td>@r.TimeSlot.StartTime.ToString("hh\\:mm")</td>
                         <td>@r.Instructor.FullName</td>
-                        <td class="d-flex justify-content-center gap-2">
-                            <form method="post" asp-page-handler="Approve">
-                                <input type="hidden" name="reservationId" value="@r.Id" />
-                                <button type="submit" class="btn btn-sm btn-success">Onayla</button>
-                            </form>
-                            <button type="button" class="btn btn-sm btn-danger"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#rejectModal"
-                                    data-reservation-id="@r.Id">
-                                Reddet
-                            </button>
+                        <td>
+                            <div class="d-flex justify-content-center align-items-center gap-2" style="padding: 0.25rem;">
+                                <form method="post" asp-page-handler="Approve">
+                                    <input type="hidden" name="reservationId" value="@r.Id" />
+                                    <button type="submit" class="btn btn-sm btn-success">Onayla</button>
+                                </form>
+                                <button type="button" class="btn btn-sm btn-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#rejectModal"
+                                        data-reservation-id="@r.Id">
+                                    Reddet
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 }
