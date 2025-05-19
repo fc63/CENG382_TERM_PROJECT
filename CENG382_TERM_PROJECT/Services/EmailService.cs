@@ -21,7 +21,7 @@ namespace CENG382_TERM_PROJECT.Services
             try
             {
                 // maili geçici olarak iptal etmek için
-                // return;
+                return;
                 var mail = new MailMessage
                 {
                     From = new MailAddress(_settings.SenderEmail, "CENG382 Term Project"),

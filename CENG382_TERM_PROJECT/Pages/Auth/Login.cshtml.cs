@@ -78,7 +78,7 @@ namespace CENG382_TERM_PROJECT.Pages.Auth
             if (user == null || !BCrypt.Net.BCrypt.Verify(passwordWithPepper, user.PasswordHash))
             {
                 ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
-                var role = "Instructor";
+                var role = user?.Role ?? "Instructor";
 
                 failedAttempt = await _context.FailedLoginAttempts
                     .FirstOrDefaultAsync(f => f.IPAddress == ipAddress && f.Email == Email);
