@@ -11,11 +11,13 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.Feedback
     {
         private readonly IFeedbackService _feedbackService;
         private readonly AppDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public IndexModel(IFeedbackService feedbackService, AppDbContext context)
+        public IndexModel(IFeedbackService feedbackService, AppDbContext context, IEmailService emailService)
         {
             _feedbackService = feedbackService;
             _context = context;
+            _emailService = emailService;
         }
 
         [BindProperty]
@@ -53,8 +55,30 @@ namespace CENG382_TERM_PROJECT.Pages.Instructor.Feedback
             };
 
             await _feedbackService.AddFeedbackAsync(feedback);
+
+            try
+            {
+                var adminEmail = _context.Users.FirstOrDefault(u => u.Role == "Admin")?.Email;
+                var instructorName = User.FindFirst("FullName")?.Value;
+                var className = _context.Classrooms.FirstOrDefault(c => c.Id == SelectedClassId)?.Name;
+
+                if (!string.IsNullOrEmpty(adminEmail))
+                {
+                    var subject = "Yeni Geri Bildirim Gönderildi";
+                    var body = $"Eðitmen: {instructorName}\n" +
+                               $"Derslik: {className}\n" +
+                               $"Yýldýz: {Stars}\n" +
+                               $"Yorum: {Comment}";
+
+                    await _emailService.SendEmailAsync(adminEmail, subject, body);
+                }
+            }
+            catch
+            {
+            }
+
             TempData["Message"] = "Geri bildiriminiz baþarýyla gönderildi.";
-            return RedirectToPage(); // Sayfayý yenile
+            return RedirectToPage();
         }
     }
 }
